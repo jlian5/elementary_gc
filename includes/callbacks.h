@@ -1,10 +1,10 @@
 /**
- * vector
+ * shell
  * CS 241 - Spring 2021
  */
 #pragma once
-#include <stdbool.h>
 #include <stdlib.h>
+
 /**
  * This header file contains all the callbacks used for our containers.
  */
@@ -29,7 +29,7 @@ typedef void *(*copy_constructor_type)(void *elem);
  *
  * Note that when a user removes an element from the container this function is
  * used.
- */
+*/
 typedef void (*destructor_type)(void *elem);
 
 /**
@@ -40,7 +40,7 @@ typedef void (*destructor_type)(void *elem);
  *
  * Note that whenever a default value of an object is needed this function is
  * used.
- */
+*/
 typedef void *(*default_constructor_type)(void);
 
 /**
@@ -134,8 +134,6 @@ void *string_default_constructor(void);
  * the only difference being that NULL strings are hashed to 163.
  */
 size_t string_hash_function(void *elem);
-
-// The following is code generated:
 
 /**
  * char callback functions.

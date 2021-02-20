@@ -1,5 +1,5 @@
 /**
- * vector
+ * shell
  * CS 241 - Spring 2021
  */
 #pragma once
@@ -34,20 +34,33 @@
  * happen at logarithmically growing intervals of size so that the insertion of
  * individual elements at the end of the vector can be provided with amortized
  * constant time complexity (see push_back).
- *
+
  * Therefore, compared to arrays, vectors consume more memory in exchange for
  * the ability to manage storage and grow dynamically in an efficient way.
- *
+
  * Compared to the other dynamic sequence containers (deques, lists and
  * forward_lists), vectors are very efficient accessing its elements (just like
  * arrays) and relatively efficient adding or removing elements from its end.
  * For operations that involve inserting or removing elements at positions other
  * than the end, they perform worse than the others, and have less consistent
  * iterators and references than lists and forward_lists.
-*/
+ */
 
 /* Forward declare vector structure. */
 typedef struct vector vector;
+
+/**
+ * 'INITIAL_CAPACITY' is the macro that will be used to set the capacity of the
+ * vector in vector_create().
+ */
+#define INITIAL_CAPACITY 8
+/**
+ * 'GROWTH_FACTOR' is how much the vector will grow by in automatic reallocation
+ * (2 means double).
+ */
+#define GROWTH_FACTOR 2
+
+// Member Functions:
 
 /**
  * Allocate and return a pointer to a new vector (on the heap).
@@ -55,11 +68,6 @@ typedef struct vector vector;
  * If you would like to make 'shallow' copies of the elements of the 'vector',
  * then you may pass in NULL for the parameters
  * (ex. vector_create(NULL, NULL, NULL)).
- * If you would like to make 'deep' copies of the elements of the 'vector',
- * then you may pass the addresses of a particular set of
- * callback functions in for the parameters
- * (ex. vector_create(&string_copy_constructor, &string_destructor,
- * &string_default_constructor)).
  * Hint: Look at callbacks.h.
  * This means that everytime an element is to be copied or removed from the
  * 'vector' the pointer to that element is copied or removed
@@ -74,7 +82,7 @@ vector *vector_create(copy_constructor_type copy_constructor,
  * Destroys all container elements by
  * calling on the user provided destructor for every element,
  * and deallocates all the storage capacity allocated by the 'vector'.
- */
+*/
 void vector_destroy(vector *this);
 
 // Iterators
@@ -197,12 +205,12 @@ void **vector_at(vector *this, size_t n);
  * Sets the 'element' at position 'n' in the 'vector'.
  *
  * Note: That this will destroy whatever is already at position 'n'.
- */
+*/
 void vector_set(vector *this, size_t n, void *element);
 
 /**
- * Gets a reference to the 'element' at position 'n' in the 'vector'.
- */
+ * Gets the 'element' at position 'n' in the 'vector'.
+*/
 void *vector_get(vector *this, size_t n);
 
 /**
@@ -288,6 +296,35 @@ void vector_erase(vector *this, size_t position);
  */
 void vector_clear(vector *this);
 
+/**
+ * Vector iteration macro. `vecname` is the name of the vector. `varname` is the
+ * name of a temporary (local) variable to refer to each element in the vector,
+ * and `callback` is a block of code that gets executed once for each element in
+ * the vector until `break;` is called.
+ *
+ * Example usage:
+ * ```
+ *     vector *v = string_vector_create();
+ *     vector_push_back(v, "Hi!"); vector_push_back(v, "I'm");
+ *     vector_push_back(v, "Vector"); vector_push_back(v, "\n");
+ *     VECTOR_FOR_EACH(v, thing, {
+ *       fprintf("%s\n", (char *) thing);
+ *       if (!strcmp((char *) thing, "Set")){
+ *         break;
+ *       }
+ *     });
+ * ```
+ */
+#define VECTOR_FOR_EACH(vecname, varname, callback) \
+    do {                                            \
+        void **_it = vector_begin(vecname);         \
+        void **_iend = vector_end(vecname);         \
+        for (; _it != _iend; ++_it) {               \
+            void *varname = *_it;                   \
+            { callback; }                           \
+        }                                           \
+    } while (0)
+
 // The following is code generated:
 
 /**
@@ -350,7 +387,3 @@ vector *unsigned_long_vector_create(void);
  * Creates a vector meant for unsigned short(s).
  */
 vector *unsigned_short_vector_create(void);
-
-extern const size_t INITIAL_CAPACITY;
-
-extern const size_t GROWTH_FACTOR;
