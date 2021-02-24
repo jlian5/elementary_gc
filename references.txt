@@ -2,3 +2,8 @@ https://en.wikipedia.org/wiki/Tracing_garbage_collection
 https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/fundamentals
 
 https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/generations.html
+
+Generations Youtube Videos
+https://www.youtube.com/watch?v=HBd7yVzJllw&ab_channel=RedgateVideos
+https://www.youtube.com/watch?v=pJHISaOW6Vc&t=3s&ab_channel=SEPLGoetheUniversityFrankfurt
+https://www.youtube.com/watch?v=UnaNQgzw4zY&t=898s&ab_channel=Ranjithramachandran

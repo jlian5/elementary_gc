@@ -18,9 +18,39 @@ typedef struct _gc_metadata {
      * This will be a vector with struct _gc_metadata objects inside
      * (created using shallow_vector_create() in vector.h)
      */
-    vector *references;
+    //vector *references;
+
+    /**
+     * These are vectors for each generation
+     * Each vector has some data associated to describe the vector
+     */
+    
+    struct generation *gen0;
+    struct generation *gen1;
+    struct generation *gen2;
+
+    /**
+     * Sets the data capacity for each vector
+     */
+    int capacity = 2048;
+    gen0->max_data = capacity;
+    gen1->max_data = capacity/2;
+    gen2->max_data = capacity/4;
+
 } gc_metadata_t;
 
+
+typedef struct generation {
+
+    //max amount of data for a vector until it needs to be mark and sweep
+    int max_data;
+
+    //current amount of data in the vector
+    int current_size;
+
+    //vector containing the data
+    vector *data;
+}
 /**
  * Contains a list of the top level objects that are accessible.
  * TODO: change this to add different vectors for different aged objects
@@ -55,7 +85,9 @@ void mark_and_sweep() {
 }
 
 void *gc_malloc(size_t request_size) {
-    // mark_and_sweep();
+    //check if the request_size + gen0->current_size >  gen0->max_size
+    //if true, call mark_and_sweep(); on gen0 if the amount of data allocated to gen0 exceeds its capacity and move the remains to gen1
+    //then, call mark_and_sweep(); on gen1 etc... if the data exceeds these vectors max_size
 }
 
 void *gc_calloc(size_t num_elements, size_t element_size) {
