@@ -4,7 +4,7 @@
 /**
  * Metadata for all garbage collection objects
  */
-typedef struct _gc_metadata {
+typedef struct gc_metadata {
     /**
      * Whether this object is:
      * - black(0): referenced, found from root
@@ -20,44 +20,52 @@ typedef struct _gc_metadata {
      */
     //vector *references;
 
-    /**
-     * These are vectors for each generation
-     * Each vector has some data associated to describe the vector
-     */
+    // /**
+    //  * These are vectors for each generation
+    //  * Each vector has some data associated to describe the vector
+    //  */
     
     struct generation *gen0;
     struct generation *gen1;
     struct generation *gen2;
 
-    /**
-     * Sets the data capacity for each vector
-     */
-    int capacity = 2048;
-    gen0->max_data = capacity;
-    gen1->max_data = capacity/2;
-    gen2->max_data = capacity/4;
+    // /**
+    //  * Sets the data capacity for each vector
+    //  */
+    // int capacity = 2048;
+    // gen0->max_data = capacity;
+    // gen1->max_data = capacity/2;
+    // gen2->max_data = capacity/4;
 
-} gc_metadata_t;
-
+} gc_metadata;
 
 typedef struct generation {
 
-    //max amount of data for a vector until it needs to be mark and sweep
-    int max_data;
-
-    //current amount of data in the vector
-    int current_size;
+    // //max amount of data for a vector until it needs to be mark and sweep
+    // int max_data;
+    
+    // frequency in which we should mark and sweep this generation
+    int rate;
 
     //vector containing the data
-    vector *data;
-}
+    struct vector *data;
+
+} generation;
+
 /**
  * Contains a list of the top level objects that are accessible.
  * TODO: change this to add different vectors for different aged objects
  */
-static vector *top_level_objects;
-static vector *grey_slots;
-static vector *black_slots;
+static struct vector *top_level_objects;
+static struct vector *grey_slots;
+static struct vector *black_slots;
+
+/**
+ * malCount = amount of times malloc, calloc, and realloc has been called
+ * markSweep = amount of malloc calls required for a mark and sweep call
+ */
+static int malCount = 0;
+static const int markSweep = 4;
 
 /**
  * Basic Mark and Sweep algorithm (ruby code below)
@@ -84,18 +92,80 @@ void mark_and_sweep() {
     // free all white slots (nonreachable from grey slots)
 }
 
+//contains all generations
+static gc_metadata gc;
+
+
 void *gc_malloc(size_t request_size) {
-    //check if the request_size + gen0->current_size >  gen0->max_size
-    //if true, call mark_and_sweep(); on gen0 if the amount of data allocated to gen0 exceeds its capacity and move the remains to gen1
-    //then, call mark_and_sweep(); on gen1 etc... if the data exceeds these vectors max_size
+
+    //allocate the data
+    void *ptr = malloc(request_size);
+
+    //return NULL if no data was allocated
+    if (!ptr) return NULL;
+
+    //put the pointer to the allocated data into the gen0 vector
+    vector_push_back(gc->gen0, ptr);
+
+    //checks to see if mark_and_sweep() should be called
+    malCount++;
+    if(malCount % markSweep == 0) {
+        mark_and_sweep()
+        malCount = 0;
+    }
+
+    //return a pointer to the requested data
+    return ptr;
 }
 
 void *gc_calloc(size_t num_elements, size_t element_size) {
 
+    //allocate the data
+    void *ptr = calloc(num_elements, element_size);
+
+    //return NULL if no data was allocated
+    if (!ptr) return NULL;
+
+    //put the pointer to the allocated data into the gen0 vector
+    vector_push_back(gc->gen0, ptr);
+
+    //checks to see if mark_and_sweep() should be called
+    malCount++;
+    if(malCount % markSweep == 0) {
+        mark_and_sweep()
+        malCount = 0;
+    }
+
+    //return a pointer to the requested data
+    return ptr;
 }
 
 void *gc_realloc(void *ptr, size_t request_size) {
 
+    if (ptr == NULL)
+    {
+        return gc_malloc(request_size);
+    }
+
+    int i;
+    int size =  gc->gen0->size;
+    for(i = 0; i < size; i++) {
+        if(ptr == vector_get(gc->gen0, i)) {
+
+            void *mem = realloc(ptr, request_size);
+            vector_set(gc, i, mem);
+            
+            malCount++;
+            if(malCount % markSweep == 0) {
+                mark_and_sweep()
+                malCount = 0;
+            }
+
+            return mem;
+        }
+    }
+
+    return NULL;
 }
 
 void gc_free(void *ptr) {
