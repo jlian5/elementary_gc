@@ -108,11 +108,7 @@ void *gc_malloc(size_t request_size) {
     vector_push_back(gc->gen0, ptr);
 
     //checks to see if mark_and_sweep() should be called
-    malCount++;
-    if(malCount % markSweep == 0) {
-        mark_and_sweep()
-        malCount = 0;
-    }
+    check_mark_and_sweep();
 
     //return a pointer to the requested data
     return ptr;
@@ -130,11 +126,7 @@ void *gc_calloc(size_t num_elements, size_t element_size) {
     vector_push_back(gc->gen0, ptr);
 
     //checks to see if mark_and_sweep() should be called
-    malCount++;
-    if(malCount % markSweep == 0) {
-        mark_and_sweep()
-        malCount = 0;
-    }
+    check_mark_and_sweep();
 
     //return a pointer to the requested data
     return ptr;
@@ -155,11 +147,7 @@ void *gc_realloc(void *ptr, size_t request_size) {
             void *mem = realloc(ptr, request_size);
             vector_set(gc, i, mem);
             
-            malCount++;
-            if(malCount % markSweep == 0) {
-                mark_and_sweep()
-                malCount = 0;
-            }
+            check_mark_and_sweep();
 
             return mem;
         }
@@ -172,3 +160,27 @@ void gc_free(void *ptr) {
     // no-op by design
 }
 
+void check_mark_and_sweep() {
+
+    //Method 1
+    malCount++;
+    if(malCount % markSweep == 0) {
+        mark_and_sweep();
+        malCount = 0;
+    }
+
+    //Method 2
+    //calls mark and sweep if total data in gen < current data in gen
+}
+
+void malloc(size_t size) {
+    return sbrk(size);
+}
+
+void calloc(size_t num_elements, size_t element_size) {
+    return sbrk(num_elements * element_size);
+}
+
+void realloc(void *ptr, size_t size) {
+    return sbrk(size);
+}
