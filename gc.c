@@ -1,64 +1,47 @@
 #include "gc.h"
 #include "vector.h"
 
-/**
- * Metadata for all garbage collection objects
- */
 typedef struct gc_metadata {
     /**
      * Whether this object is:
-     * - black(0): referenced, found from root
-     * - grey(0): reachable from root
-     * - white(0): unreachable -> garbage collect
+     * - white(0): referenced, found from root
+     * - grey(1): reachable from root
+     * - black(2): unreachable -> garbage collect
      */
     int color;
 
-    /**
-     * List of other garbage collector objects that can be referenced
-     * This will be a vector with struct _gc_metadata objects inside
-     * (created using shallow_vector_create() in vector.h)
-     */
-    //vector *references;
-
-    // /**
-    //  * These are vectors for each generation
-    //  * Each vector has some data associated to describe the vector
-    //  */
-    
-    struct generation *gen0;
-    struct generation *gen1;
-    struct generation *gen2;
-
-    // /**
-    //  * Sets the data capacity for each vector
-    //  */
-    // int capacity = 2048;
-    // gen0->max_data = capacity;
-    // gen1->max_data = capacity/2;
-    // gen2->max_data = capacity/4;
+    //pointer to data
+    void *data;
 
 } gc_metadata;
 
-typedef struct generation {
+typedef struct generation
+{
 
-    // //max amount of data for a vector until it needs to be mark and sweep
-    // int max_data;
-    
     // frequency in which we should mark and sweep this generation
     int rate;
 
     //vector containing the data
-    struct vector *data;
+    vector *data;
+
+    //amount of data in this gen
+    int curr_size;
+
+    //amount of data it should hold before being mark and sweep
+    int max_size;
+
+    //next generation
+    generation *next;
 
 } generation;
 
-/**
- * Contains a list of the top level objects that are accessible.
- * TODO: change this to add different vectors for different aged objects
- */
-static struct vector *top_level_objects;
-static struct vector *grey_slots;
-static struct vector *black_slots;
+//Generation structs
+static generation *gen0;
+static generation *gen1;
+static generation *gen2;
+
+//place holder for stack memory
+static vector *root;
 
 /**
  * malCount = amount of times malloc, calloc, and realloc has been called
@@ -77,62 +60,94 @@ static const int markSweep = 4;
  * This will use the top_level_objects vector and mark (by changing the color)
  * and sweep the objects by freeing them as necessary.
  */
-void mark_and_sweep() {
+void mark_and_sweep(generation *g)
+{
+    int i, size;
+    //the int vector are placeholder, it should be void pointers
+    vector *black_slots = int_vector_create();
+    vector *grey_slots = int_vector_create();
+    vector *white_slots = int_vector_create();
+
     // MARK:
-    while (!vector_empty(grey_slots)) {
-        gc_metadata_t *current_slot = (gc_metadata_t *) vector_back(grey_slots);
+
+    //This section for marking gray objects from the stack, may not be needed
+    size = vector_size(root);
+    //mark all the refrences in the stack to gray and add them to grey_slots if they are marked white
+    for(i = 0; i < size; i++) {
+        //check to make sure heap data is from the specified gen g
+    }
+
+    while (!vector_empty(grey_slots))
+    {
+        gc_metadata *current_slot = (gc_metadata *)vector_back(grey_slots);
         vector_pop_back(grey_slots);
-        VECTOR_FOR_EACH(current_slot->references, referenced, {
-            vector_push_back(grey_slots, referenced);
-        });
+
+        //go through all the refrences of current_slot, add them to gray_slots if white, and mark them gray
+
+        // VECTOR_FOR_EACH(current_slot->references, referenced, {
+        //     vector_push_back(grey_slots, referenced);
+        // });
+        
+        //bring curr slot to black
         vector_push_back(black_slots, current_slot);
     }
 
     // SWEEP:
-    // free all white slots (nonreachable from grey slots)
+
+    //loop through all white marked data and free it
+    size = vector_size(white_slots);
+    for(i = 0; i < size; i++) {
+        free(vector_get(white_slots, i));
+    }
+
+    //loop through all black marked data and move it to the next gen
+    size = vector_size(black_slots);
+    for(i = 0; i < size; i++) {
+        vector_push_back(g->next->data, vector_get(black_slots, i));
+    }
+
+    //check to see if mark and sweep should be called on next generation
+    check_mark_and_sweep(g->next);
+
+    vector_destory(black_slots);
+    vector_destory(grey_slots);
+    vector_destroy(white_slots);
 }
 
-//contains all generations
-static gc_metadata gc;
-
-
-void *gc_malloc(size_t request_size) {
+void *gc_malloc(size_t request_size)
+{
 
     //allocate the data
-    void *ptr = malloc(request_size);
+    gc_metadata *ptr = malloc(request_size + sizeof(gc_metadata));
 
     //return NULL if no data was allocated
-    if (!ptr) return NULL;
+    if (!ptr)
+        return NULL;
+
+    ptr->color = 0;
+    ptr->data = (void*)ptr + sizeof(gc_metadata);
 
     //put the pointer to the allocated data into the gen0 vector
-    vector_push_back(gc->gen0, ptr);
+    vector_push_back(gen0, ptr);
 
     //checks to see if mark_and_sweep() should be called
-    check_mark_and_sweep();
+    check_mark_and_sweep(gen0);
 
     //return a pointer to the requested data
     return ptr;
 }
 
-void *gc_calloc(size_t num_elements, size_t element_size) {
-
-    //allocate the data
-    void *ptr = calloc(num_elements, element_size);
-
-    //return NULL if no data was allocated
-    if (!ptr) return NULL;
-
-    //put the pointer to the allocated data into the gen0 vector
-    vector_push_back(gc->gen0, ptr);
-
-    //checks to see if mark_and_sweep() should be called
-    check_mark_and_sweep();
-
-    //return a pointer to the requested data
+void *gc_calloc(size_t num_elements, size_t element_size)
+{
+    size_t n = num_elements * element_size;
+    void *ptr = gc_malloc(num_elements * element_size);
+    bzero(ptr, n);
     return ptr;
 }
 
-void *gc_realloc(void *ptr, size_t request_size) {
+//double check this works
+void *gc_realloc(void *ptr, size_t request_size)
+{
 
     if (ptr == NULL)
     {
@@ -140,14 +155,16 @@ void *gc_realloc(void *ptr, size_t request_size) {
     }
 
     int i;
-    int size =  gc->gen0->size;
-    for(i = 0; i < size; i++) {
-        if(ptr == vector_get(gc->gen0, i)) {
+    int size = gen0->curr_size;
+    for (i = 0; i < size; i++)
+    {
+        if (ptr == vector_get(gen0, i))
+        {
 
             void *mem = realloc(ptr, request_size);
-            vector_set(gc, i, mem);
-            
-            check_mark_and_sweep();
+            vector_set(gen0->data, i, mem);
+
+            check_mark_and_sweep(gen0);
 
             return mem;
         }
@@ -156,31 +173,40 @@ void *gc_realloc(void *ptr, size_t request_size) {
     return NULL;
 }
 
-void gc_free(void *ptr) {
+void gc_free(void *ptr)
+{
     // no-op by design
 }
 
-void check_mark_and_sweep() {
+//checks whether g should be mark and sweep and call it if it does
+void check_mark_and_sweep(generation *g)
+{
 
-    //Method 1
-    malCount++;
-    if(malCount % markSweep == 0) {
-        mark_and_sweep();
-        malCount = 0;
-    }
+    // //Method 1
+    // malCount++;
+    // if (malCount % markSweep == 0)
+    // {
+    //     mark_and_sweep(g);
+    //     malCount = 0;
+    // }
 
     //Method 2
     //calls mark and sweep if total data in gen < current data in gen
+    if(g->curr_size > g->max_size) {
+        mark_and_sweep(g);
+    }
+
+    return;
 }
 
-void malloc(size_t size) {
-    return sbrk(size);
-}
+// void malloc(size_t size) {
+//     return sbrk(size);
+// }
 
-void calloc(size_t num_elements, size_t element_size) {
-    return sbrk(num_elements * element_size);
-}
+// void calloc(size_t num_elements, size_t element_size) {
+//     return sbrk(num_elements * element_size);
+// }
 
-void realloc(void *ptr, size_t size) {
-    return sbrk(size);
-}
+// void realloc(void *ptr, size_t size) {
+//     return sbrk(size);
+// }
