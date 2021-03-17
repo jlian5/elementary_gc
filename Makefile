@@ -45,6 +45,9 @@ test-debug: $(OBJS_DIR)/test-debug.o $(OBJS_DIR)/gc-debug.o
 test: $(OBJS_DIR)/test-release.o $(OBJS_DIR)/gc-release.o
 	$(LD) $^ $(LDFLAGS) -o $@
 
+# stack_scan: 
+# 	$(LD) -g stack_scan.c -o stack_scan
+
 .PHONY: clean
 clean:
 	rm -rf $(EXES)
