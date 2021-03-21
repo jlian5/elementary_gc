@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "HelloWorld": "python",
+        "*.py": "python",
+        "stdio.h": "c"
+    }
+}
