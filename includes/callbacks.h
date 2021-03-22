@@ -1,5 +1,5 @@
 /**
- * shell
+ * deadlock_demolition
  * CS 241 - Spring 2021
  */
 #pragma once
