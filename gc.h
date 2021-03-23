@@ -5,3 +5,5 @@
 
 #include <malloc.h>
 
+
+void *gc_malloc(size_t request_size);

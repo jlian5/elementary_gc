@@ -3,11 +3,15 @@
 
 #include "includes/set.h"
 #include <unistd.h>
-
+#include "gc.h"
 /**
  * gcc -fno-omit-frame-pointer stack_scan.c libs/libset-pthread.a libs/libvector-pthread.a libs/libcompare-pthread.a libs/libcallbacks-pthread.a -o stack_scan
  **/
 
+typedef struct metaData {
+    int isFree;
+    void *ptr;
+} metaData;
 
 static void** base_stack;
 static void* base_heap;
@@ -19,8 +23,9 @@ int main() {
     base_stack = __builtin_frame_address(0);
     base_heap = (void*) sbrk(0);
 
+    gc_malloc(1);
     int* a[100];
-    for(size_t i = 0; i < 100; i ++) a[i] = malloc(sizeof (int));
+    for(size_t i = 0; i < 100; i ++) a[i] = gc_malloc(sizeof (int));
     f();
 
     vector* v = unused_refs();
@@ -85,4 +90,25 @@ vector* unused_refs() {
     set_destroy(caller_refs);
 
     return unused_refs_vec; //TODO used this vector to see if any of these unused_refs point to used memory, if so free them.
+}
+
+void *gc_malloc(size_t size) {
+    metaData *meta = malloc(sizeof(metaData) + size);
+    meta->isFree = 0;
+    meta->ptr = (void *)meta + sizeof(metaData);
+    return meta->ptr;
+}
+
+void gc_free(void *ptr) {
+    metaData *meta = (void*)ptr - sizeof(metaData);
+    meta->isFree = 1;
+}
+
+void mark_and_sweep(vector *v) {
+    size_t size = vector_size(v);
+    for(size_t i = 0; i < size; i++) {
+        metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
+        if(meta->isFree)
+            free(meta->ptr);
+    }
 }

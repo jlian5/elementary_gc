@@ -2,11 +2,12 @@
 #include "vector.h"
 
 typedef struct gc_metadata {
+
     /**
      * Whether this object is:
-     * - white(0): referenced, found from root
-     * - grey(1): reachable from root
-     * - black(2): unreachable -> garbage collect
+     * - white = 0
+     * - grey = 1
+     * - black = 2
      */
     int color;
 
