@@ -2,6 +2,7 @@
 #include <malloc.h>
 
 #include "includes/set.h"
+#include <unistd.h>
 
 /**
  * gcc -fno-omit-frame-pointer stack_scan.c libs/libset-pthread.a libs/libvector-pthread.a libs/libcompare-pthread.a libs/libcallbacks-pthread.a -o stack_scan
@@ -16,7 +17,7 @@ int f();
 
 int main() {
     base_stack = __builtin_frame_address(0);
-    base_heap = sbrk(0);
+    base_heap = (void*) sbrk(0);
 
     int* a[100];
     for(size_t i = 0; i < 100; i ++) a[i] = malloc(sizeof (int));
@@ -26,12 +27,16 @@ int main() {
     printf("in main %zu\n", vector_size(v));
     vector_destroy(v);
 
-    return;
+    return 0;
     
 }
 
 int f() {
     int* a = malloc(sizeof(int));
+    free(a);
+    int* b = malloc(sizeof(int));
+    int* c = malloc(sizeof(int));
+    int* d = malloc(sizeof(int));
 
 
     vector* v = unused_refs();
@@ -48,7 +53,7 @@ int f() {
 vector* unused_refs() {
     void** caller_stack = __builtin_frame_address(1); //this is the frame of the function that called the function to be cleaned up
     void** curr_stack = __builtin_frame_address(0); //this is the frame of the function that we need to clean
-    void* curr_heap = sbrk(0); //current heap ptr
+    void* curr_heap = (void*) sbrk(0); //current heap ptr
 
     set* caller_refs = shallow_set_create(); 
 
