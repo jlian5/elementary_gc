@@ -3,7 +3,6 @@
 
 #include "includes/set.h"
 #include <unistd.h>
-#include "gc.h"
 /**
  * gcc -fno-omit-frame-pointer stack_scan.c libs/libset-pthread.a libs/libvector-pthread.a libs/libcompare-pthread.a libs/libcallbacks-pthread.a -o stack_scan
  **/
@@ -18,22 +17,41 @@ static void* base_heap;
 
 vector* unused_refs();
 int f();
+void *gc_malloc();
+void mark_and_sweep();
 
 int main() {
     base_stack = __builtin_frame_address(0);
     base_heap = (void*) sbrk(0);
 
-    gc_malloc(1);
-    int* a[100];
-    for(size_t i = 0; i < 100; i ++) a[i] = gc_malloc(sizeof (int));
-    f();
+    // //int* a[100];
+    // //for(size_t i = 0; i < 100; i ++) a[i] = gc_malloc(sizeof (int));
+    // //f();
+
+    int* a = gc_malloc(sizeof(int));
+    printf("a addr: %p\n", a);
+    //free(a);
+    int* b = gc_malloc(sizeof(int));
+    *b = 2;
+    //printf("b addr: %p\n", b);
+
+    int* c = gc_malloc(sizeof(int));
+    *c = 3;
+    //free(b);
+    int* d = gc_malloc(sizeof(int));
+    *d = 4;
+
 
     vector* v = unused_refs();
-    printf("in main %zu\n", vector_size(v));
+    // //printf("in f %zu\n", vector_size(v));
+
+    // // vector* v = unused_refs();
+    mark_and_sweep(v);
+    //printf("a addr: %p\n", a);
+    // // printf("in main %zu\n", vector_size(v));
     vector_destroy(v);
 
     return 0;
-    
 }
 
 int f() {
@@ -99,16 +117,14 @@ void *gc_malloc(size_t size) {
     return meta->ptr;
 }
 
-void gc_free(void *ptr) {
-    metaData *meta = (void*)ptr - sizeof(metaData);
-    meta->isFree = 1;
-}
-
 void mark_and_sweep(vector *v) {
     size_t size = vector_size(v);
+    //puts("b");
     for(size_t i = 0; i < size; i++) {
         metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
-        if(meta->isFree)
+        if(!(meta->isFree)){
+            puts("a");
             free(meta->ptr);
+        }
     }
 }

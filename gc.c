@@ -125,7 +125,7 @@ void *gc_malloc(size_t request_size)
     if (!ptr)
         return NULL;
 
-    ptr->color = 0;
+    ptr->color = 1;
     ptr->data = (void*)ptr + sizeof(gc_metadata);
 
     //put the pointer to the allocated data into the gen0 vector
