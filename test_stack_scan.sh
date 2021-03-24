@@ -7,7 +7,7 @@ echo ----------------------------BELOW IS mreplace-------------------
 
 echo ----------------------------BELOW IS GLIBC-------------------
 
-# valgrind   --leak-check=full ./stack_scan
-./stack_scan
+valgrind   --leak-check=full ./stack_scan
+# ./stack_scan
 
 rm stack_scan
