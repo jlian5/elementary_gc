@@ -43,7 +43,7 @@ int main() {
 
 
     vector* v = unused_refs();
-    // //printf("in f %zu\n", vector_size(v));
+    printf("in f %zu\n", vector_size(v));
 
     // // vector* v = unused_refs();
     mark_and_sweep(v);
@@ -106,12 +106,14 @@ vector* unused_refs() {
     }
     vector* unused_refs_vec = set_elements(unused_refs);
     set_destroy(caller_refs);
+    set_destroy(unused_refs);
 
     return unused_refs_vec; //TODO used this vector to see if any of these unused_refs point to used memory, if so free them.
 }
 
 void *gc_malloc(size_t size) {
     metaData *meta = malloc(sizeof(metaData) + size);
+    printf("malloced: %p\n", meta);
     meta->isFree = 0;
     meta->ptr = (void *)meta + sizeof(metaData);
     return meta->ptr;
@@ -124,7 +126,8 @@ void mark_and_sweep(vector *v) {
         metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
         if(!(meta->isFree)){
             puts("a");
-            free(meta->ptr);
+            printf("freed: %p\n", meta);
+            free(meta);
         }
     }
 }
