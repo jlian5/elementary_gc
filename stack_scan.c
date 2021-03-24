@@ -9,7 +9,7 @@
 
 typedef struct metaData {
     int isFree;
-    void *ptr;
+    char ptr[0];
 } metaData;
 
 static void** base_stack;
@@ -23,33 +23,38 @@ void mark_and_sweep();
 int main() {
     base_stack = __builtin_frame_address(0);
     base_heap = (void*) sbrk(0);
-
+    
     // //int* a[100];
     // //for(size_t i = 0; i < 100; i ++) a[i] = gc_malloc(sizeof (int));
     // //f();
 
     int* a = gc_malloc(sizeof(int));
-    printf("a addr: %p\n", a);
+    printf("%p\n", a);
+    // printf("a addr: %p\n", a);
     //free(a);
     int* b = gc_malloc(sizeof(int));
     *b = 2;
+    printf("%p\n", b);
     //printf("b addr: %p\n", b);
 
     int* c = gc_malloc(sizeof(int));
     *c = 3;
+    printf("%p\n", c);
     //free(b);
     int* d = gc_malloc(sizeof(int));
     *d = 4;
+    printf("%p\n", d);
 
 
     vector* v = unused_refs();
-    printf("in f %zu\n", vector_size(v));
+    // printf("in f %zu\n", vector_size(v));
 
     // // vector* v = unused_refs();
     mark_and_sweep(v);
     //printf("a addr: %p\n", a);
     // // printf("in main %zu\n", vector_size(v));
     vector_destroy(v);
+    printf("%d", *d);
 
     return 0;
 }
@@ -115,7 +120,7 @@ void *gc_malloc(size_t size) {
     metaData *meta = malloc(sizeof(metaData) + size);
     printf("malloced: %p\n", meta);
     meta->isFree = 0;
-    meta->ptr = (void *)meta + sizeof(metaData);
+    // meta->ptr = (void *)meta + sizeof(metaData);
     return meta->ptr;
 }
 
@@ -125,8 +130,10 @@ void mark_and_sweep(vector *v) {
     for(size_t i = 0; i < size; i++) {
         metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
         if(!(meta->isFree)){
-            puts("a");
+            // puts("a");
             printf("freed: %p\n", meta);
+            printf("contained data: %d\n", *(int*)meta->ptr);
+            
             free(meta);
         }
     }
