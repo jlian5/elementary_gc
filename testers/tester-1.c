@@ -1,3 +1,7 @@
+/**
+ * malloc
+ * CS 241 - Spring 2021
+ */
 #include <stdio.h>
 
 #include "../gc.h"
