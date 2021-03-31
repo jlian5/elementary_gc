@@ -14,6 +14,7 @@ typedef struct metaData {
 
 static void** base_stack;
 static void* base_heap;
+static set* in_use;
 
 vector* unused_refs();
 int f();
@@ -23,11 +24,19 @@ void mark_and_sweep();
 int main() {
     base_stack = __builtin_frame_address(0);
     base_heap = (void*) sbrk(0);
-    
-    // //int* a[100];
-    // //for(size_t i = 0; i < 100; i ++) a[i] = gc_malloc(sizeof (int));
-    // //f();
+    in_use = shallow_set_create();
 
+    int* array[10];
+    for(size_t i = 0; i < 10; i ++) array[i] = gc_malloc(sizeof (int));
+
+    f();
+
+    puts("---------------- in main()-------------------------");
+
+    
+
+
+    puts("\nbelow is variables");
     int* a = gc_malloc(sizeof(int));
     printf("%p\n", a);
     // printf("a addr: %p\n", a);
@@ -52,28 +61,29 @@ int main() {
     // // vector* v = unused_refs();
     mark_and_sweep(v);
     //printf("a addr: %p\n", a);
-    // // printf("in main %zu\n", vector_size(v));
+    printf("in main %zu\n", vector_size(v));
     vector_destroy(v);
     printf("%d", *d);
-
+    set_destroy(in_use);
     return 0;
 }
 
 int f() {
-    int* a = malloc(sizeof(int));
-    printf("a addr: %p\n", a);
-    free(a);
-    int* b = malloc(sizeof(int));
-    printf("b addr: %p\n", b);
+    puts("---------------- in f()-------------------------");
+    int* a = gc_malloc(sizeof(int));
+    // printf("a addr: %p\n", a);
+    int* b = gc_malloc(sizeof(int));
+    // printf("b addr: %p\n", b);
 
-    int* c = malloc(sizeof(int));
-    free(b);
-    int* d = malloc(sizeof(int));
+    int* c = gc_malloc(sizeof(int));
+    int* d = gc_malloc(sizeof(int));
 
 
     vector* v = unused_refs();
-    printf("in f %zu\n", vector_size(v));
+    // printf("in f %zu\n", vector_size(v));
+    mark_and_sweep(v);
     vector_destroy(v);
+    puts("----------------^^f()^^-------------------------");
     return 0;
 }
 
@@ -121,6 +131,7 @@ void *gc_malloc(size_t size) {
     printf("malloced: %p\n", meta);
     meta->isFree = 0;
     // meta->ptr = (void *)meta + sizeof(metaData);
+    set_add(in_use, meta->ptr);
     return meta->ptr;
 }
 
@@ -128,11 +139,12 @@ void mark_and_sweep(vector *v) {
     size_t size = vector_size(v);
     //puts("b");
     for(size_t i = 0; i < size; i++) {
+        if(!set_contains(in_use, vector_get(v, i))) continue;
         metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
         if(!(meta->isFree)){
             // puts("a");
             printf("freed: %p\n", meta);
-            printf("contained data: %d\n", *(int*)meta->ptr);
+            // printf("contained data: %d\n", *(int*)meta->ptr);
             
             free(meta);
         }
