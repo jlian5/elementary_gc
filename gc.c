@@ -1,19 +1,19 @@
 #include "gc.h"
 #include "vector.h"
+#include "includes/set.h"
 
+#include <stdio.h>
+#include <malloc.h>
+#include <unistd.h>
+
+#define white 0
+#define grey  1
+#define black 2
+
+//metadata struct
 typedef struct gc_metadata {
-
-    /**
-     * Whether this object is:
-     * - white = 0
-     * - grey = 1
-     * - black = 2
-     */
     int color;
-
-    //pointer to data
     void *data;
-
 } gc_metadata;
 
 typedef struct generation
@@ -36,20 +36,20 @@ typedef struct generation
 
 } generation;
 
-//Generation structs
+//Used for stack searching
+static void** base_stack;
+static void* base_heap;
+static set* in_use;
+
+//Generation vectors
+//could change this to vectors of generaation vectors
 static generation *gen0;
 static generation *gen1;
 static generation *gen2;
 
-//place holder for stack memory
-static vector *root;
-
-/**
- * malCount = amount of times malloc, calloc, and realloc has been called
- * markSweep = amount of malloc calls required for a mark and sweep call
- */
-static int malCount = 0;
-static const int markSweep = 4;
+//Amount of times allocation has be called
+static int alCount = 0;
+static int freeCount = 0;
 
 /**
  * Basic Mark and Sweep algorithm (ruby code below)
@@ -63,33 +63,38 @@ static const int markSweep = 4;
  */
 void mark_and_sweep(generation *g)
 {
-    int i, size;
+    size_t i, size;
     //the int vector are placeholder, it should be void pointers
     vector *black_slots = int_vector_create();
     vector *grey_slots = int_vector_create();
-    vector *white_slots = int_vector_create();
+    vector *white_slots = gen0;
 
     // MARK:
 
-    //This section for marking gray objects from the stack, may not be needed
-    size = vector_size(root);
-    //mark all the refrences in the stack to gray and add them to grey_slots if they are marked white
+    vector* stack = unused_refs();
+    size = vector_size(stack);
+
+    //mark refrences in stack to grey
     for(i = 0; i < size; i++) {
-        //check to make sure heap data is from the specified gen g
+        gc_metadata *data = vector_get(stack, i);
+        data->color = grey;
+        vector_push_back(grey_slots, data);
     }
 
-    while (!vector_empty(grey_slots))
-    {
+    while (!vector_empty(grey_slots)) {
+
         gc_metadata *current_slot = (gc_metadata *)vector_back(grey_slots);
         vector_pop_back(grey_slots);
 
         //go through all the refrences of current_slot, add them to gray_slots if white, and mark them gray
 
         // VECTOR_FOR_EACH(current_slot->references, referenced, {
-        //     vector_push_back(grey_slots, referenced);
-        // });
+        //     if(current_slot->color == 0)
+        //         vector_push_back(grey_slots, referenced);
+        // }
         
         //bring curr slot to black
+        current_slot->color = black;
         vector_push_back(black_slots, current_slot);
     }
 
@@ -98,7 +103,11 @@ void mark_and_sweep(generation *g)
     //loop through all white marked data and free it
     size = vector_size(white_slots);
     for(i = 0; i < size; i++) {
-        free(vector_get(white_slots, i));
+        gc_metadata *current_slot = vector_get(white_slots, i);
+        if(current_slot->color == 0) {
+            free(current_slot);
+            freeCount++;
+        }
     }
 
     //loop through all black marked data and move it to the next gen
@@ -113,6 +122,7 @@ void mark_and_sweep(generation *g)
     vector_destory(black_slots);
     vector_destory(grey_slots);
     vector_destroy(white_slots);
+    vector_destory(stack);
 }
 
 void *gc_malloc(size_t request_size)
@@ -125,7 +135,7 @@ void *gc_malloc(size_t request_size)
     if (!ptr)
         return NULL;
 
-    ptr->color = 1;
+    ptr->color = white;
     ptr->data = (void*)ptr + sizeof(gc_metadata);
 
     //put the pointer to the allocated data into the gen0 vector
@@ -198,6 +208,44 @@ void check_mark_and_sweep(generation *g)
     }
 
     return;
+}
+
+/**
+ * This function should be called immediately before return to see the unused stack references in a function that is about to return. 
+ * Then the vector that contains these references can be used to do garbage collecting.
+ **/
+vector* unused_refs() {
+    void** caller_stack = __builtin_frame_address(1); //this is the frame of the function that called the function to be cleaned up
+    void** curr_stack = __builtin_frame_address(0); //this is the frame of the function that we need to clean
+    void* curr_heap = (void*) sbrk(0); //current heap ptr
+
+    set* caller_refs = shallow_set_create(); 
+
+    //scan through the stack frame excluding curr_stack to see all the references that were saved.
+    void** ptr = caller_stack; 
+    while(ptr < base_stack) {
+        if(*ptr >=  base_heap && *ptr < curr_heap) {
+            set_add(caller_refs, *ptr);
+        }
+        ptr++;
+    }
+
+    set* unused_refs = shallow_set_create();
+    
+    //scan through the stack frame to be cleaned up and see if any unsaved refs exist.
+    ptr = curr_stack;
+    while(ptr < caller_stack) {
+        if(*ptr >=  base_heap && *ptr < curr_heap) {
+            if(!set_contains(caller_refs, *ptr) && !set_contains(unused_refs, *ptr)) 
+                set_add(unused_refs, *ptr);
+        }
+        ptr++;
+    }
+    vector* unused_refs_vec = set_elements(unused_refs);
+    set_destroy(caller_refs);
+    set_destroy(unused_refs);
+
+    return unused_refs_vec; //TODO used this vector to see if any of these unused_refs point to used memory, if so free them.
 }
 
 // void malloc(size_t size) {
