@@ -45,8 +45,21 @@ test-debug: $(OBJS_DIR)/test-debug.o $(OBJS_DIR)/gc-debug.o
 test: $(OBJS_DIR)/test-release.o $(OBJS_DIR)/gc-release.o
 	$(LD) $^ $(LDFLAGS) -o $@
 
-# stack_scan: 
-# 	$(LD) -g stack_scan.c -o stack_scan
+scan: stack_scan
+	./stack_scan
+
+scan_mreplace: stack_scan
+	./mreplace ./stack_scan
+
+scan_both: stack_scan	
+	echo ----------------------------BELOW IS mreplace-------------------
+	./mreplace ./stack_scan
+	echo ----------------------------BELOW IS GLIBC-------------------
+	./stack_scan
+
+stack_scan:
+	gcc -g -fno-omit-frame-pointer stack_scan.c libs/libset-pthread.a libs/libvector-pthread.a libs/libcompare-pthread.a libs/libcallbacks-pthread.a -o stack_scan
+
 
 .PHONY: clean
 clean:

@@ -1,0 +1,10 @@
+function main(){
+    take note of the beginning of our stack frames
+    take note of the beginning of our heap ptr
+
+    ...
+    ...
+    ...
+
+    
+}

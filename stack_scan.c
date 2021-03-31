@@ -7,6 +7,34 @@
  * gcc -fno-omit-frame-pointer stack_scan.c libs/libset-pthread.a libs/libvector-pthread.a libs/libcompare-pthread.a libs/libcallbacks-pthread.a -o stack_scan
  **/
 
+#define GC_INIT() \
+    do {                                            \
+        {base_stack = __builtin_frame_address(0);  \
+        base_heap = (void*) sbrk(0);              \
+        in_use = shallow_set_create();}            \
+    } while (0)
+
+
+#define GC_RETURN(ret_code,callback) \
+    do {                                            \
+        {vector* v = unused_refs();                \
+        mark_and_sweep(v);                        \
+        vector_destroy(v);                        \
+        {callback}                                  \
+        return ret_code;}                           \
+    } while (0)
+
+#define GC_EXIT(ret_code, callback) \
+    do {                                            \
+        {vector* v = unused_refs();                \
+        mark_and_sweep(v);                        \
+        vector_destroy(v);                        \
+        set_destroy(in_use);                      \
+        {callback}                                  \
+        exit(ret_code);}                           \
+    } while (0)
+
+
 typedef struct metaData {
     int isFree;
     char ptr[0];
@@ -21,10 +49,10 @@ int f();
 void *gc_malloc();
 void mark_and_sweep();
 
+
+
 int main() {
-    base_stack = __builtin_frame_address(0);
-    base_heap = (void*) sbrk(0);
-    in_use = shallow_set_create();
+    GC_INIT();
 
     int* array[10];
     for(size_t i = 0; i < 10; i ++) array[i] = gc_malloc(sizeof (int));
@@ -32,9 +60,6 @@ int main() {
     f();
 
     puts("---------------- in main()-------------------------");
-
-    
-
 
     puts("\nbelow is variables");
     int* a = gc_malloc(sizeof(int));
@@ -55,16 +80,13 @@ int main() {
     printf("%p\n", d);
 
 
-    vector* v = unused_refs();
+    
     // printf("in f %zu\n", vector_size(v));
 
     // // vector* v = unused_refs();
-    mark_and_sweep(v);
+    
     //printf("a addr: %p\n", a);
-    printf("in main %zu\n", vector_size(v));
-    vector_destroy(v);
-    printf("%d", *d);
-    set_destroy(in_use);
+    GC_EXIT(0,{puts("end of main");});
     return 0;
 }
 
@@ -79,14 +101,10 @@ int f() {
     int* d = gc_malloc(sizeof(int));
 
 
-    vector* v = unused_refs();
-    // printf("in f %zu\n", vector_size(v));
-    mark_and_sweep(v);
-    vector_destroy(v);
-    puts("----------------^^f()^^-------------------------");
+
+    GC_RETURN(0,{puts("----------------^^f()^^-------------------------");});
     return 0;
 }
-
 
 /**
  * This function should be called immediately before return to see the unused stack references in a function that is about to return. 
