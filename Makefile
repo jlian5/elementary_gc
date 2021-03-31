@@ -1,8 +1,10 @@
 # Miniature version of the provided CS241 Makefiles
 
-EXES=gc test
+TESTERS_DIR=testers
+TESTERS_EXE_DIR=testers_exe
 
-OBJS_DIR=.objs
+TESTERS=$(filter %.c, $(shell find $(TESTERS_DIR) -type f 2>/dev/null))
+EXES=$(patsubst %.c,%,$(foreach tester,$(TESTERS),$(patsubst testers/%,testers_exe/%,$(tester))))
 
 CC=clang
 INCLUDES=-I./includes/
@@ -17,48 +19,28 @@ PROVIDED_LIBRARIES:=$(shell find libs/ -type f -name '*.a' 2>/dev/null)
 PROVIDED_LIBRARIES:=$(PROVIDED_LIBRARIES:libs/lib%.a=%)
 LDFLAGS = -Llibs/ $(foreach lib,$(PROVIDED_LIBRARIES),-l$(lib)) -lm
 
-.PHONY: all
-.PHONY: release
-.PHONY: debug
+all: $(EXES)
 
-all: release
+$(TESTERS_EXE_DIR):
+	@mkdir -p $@
 
-release: test
+$(TESTERS_EXE_DIR)/%: $(TESTERS_DIR)/%.c
+	$(LD) $^ -o $@ $(LDFLAGS)
 
-debug: clean test-debug
+.PHONY: scan
+scan: $(TESTERS_EXE_DIR)/stack_scan
+	$(TESTERS_EXE_DIR)/stack_scan
 
-# create the objects directory if not there
-$(OBJS_DIR):
-	@mkdir -p $(OBJS_DIR)
+.PHONY: scan_mreplace
+scan_mreplace: $(TESTERS_EXE_DIR)/stack_scan
+	./mreplace $(TESTERS_EXE_DIR)/stack_scan
 
-# compile to exec-debug.o in OBJS_DIR
-$(OBJS_DIR)/%-debug.o: %.c | $(OBJS_DIR)
-	$(CC) $(CFLAGS_DEBUG) $< -o $@
-
-$(OBJS_DIR)/%-release.o: %.c | $(OBJS_DIR)
-	$(CC) $(CFLAGS_RELEASE) $< -o $@
-
-# actual executables
-test-debug: $(OBJS_DIR)/test-debug.o $(OBJS_DIR)/gc-debug.o
-	$(LD) $^ $(LDFLAGS) -o $@
-
-test: $(OBJS_DIR)/test-release.o $(OBJS_DIR)/gc-release.o
-	$(LD) $^ $(LDFLAGS) -o $@
-
-scan: stack_scan
-	./stack_scan
-
-scan_mreplace: stack_scan
-	./mreplace ./stack_scan
-
-scan_both: stack_scan	
-	echo ----------------------------BELOW IS mreplace-------------------
-	./mreplace ./stack_scan
-	echo ----------------------------BELOW IS GLIBC-------------------
-	./stack_scan
-
-stack_scan:
-	gcc -g -fno-omit-frame-pointer stack_scan.c libs/libset-pthread.a libs/libvector-pthread.a libs/libcompare-pthread.a libs/libcallbacks-pthread.a -o stack_scan
+.PHONY: scan_both
+scan_both: $(TESTERS_EXE_DIR)/stack_scan
+	@echo ----------------------------BELOW IS mreplace-------------------
+	./mreplace $(TESTERS_EXE_DIR)/stack_scan
+	@echo ----------------------------BELOW IS GLIBC-------------------
+	$(TESTERS_EXE_DIR)/stack_scan
 
 
 .PHONY: clean

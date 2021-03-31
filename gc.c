@@ -199,15 +199,3 @@ void check_mark_and_sweep(generation *g)
 
     return;
 }
-
-// void malloc(size_t size) {
-//     return sbrk(size);
-// }
-
-// void calloc(size_t num_elements, size_t element_size) {
-//     return sbrk(num_elements * element_size);
-// }
-
-// void realloc(void *ptr, size_t size) {
-//     return sbrk(size);
-// }
