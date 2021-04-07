@@ -4,6 +4,7 @@
 
 //Test program for gc
 int main(void) {
+    GC_INIT();
     char *ptr1 = gc_malloc(8);
     ptr1 = "abc";
     puts(ptr1); 
