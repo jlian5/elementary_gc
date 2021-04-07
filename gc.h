@@ -16,30 +16,30 @@ extern set* in_use;
 
 #ifndef USE_MARK_SWEEP
 #define GC_INIT() \
-    do {                                            \
-        {base_stack = __builtin_frame_address(0);  \
+    do {                                          \
+        {base_stack = __builtin_frame_address(0); \
         base_heap = (void*) sbrk(0);              \
-        in_use = shallow_set_create();}            \
+        in_use = shallow_set_create();}           \
     } while (0)
 
 
 #define GC_RETURN(ret_code,callback) \
-    do {                                            \
-        {vector* v = unused_refs();                \
+    do {                                          \
+        {vector* v = unused_refs();               \
         mark_and_sweep(v);                        \
         vector_destroy(v);                        \
-        {callback}                                  \
-        return ret_code;}                           \
+        {callback}                                \
+        return ret_code;}                         \
     } while (0)
 
 #define GC_EXIT(ret_code, callback) \
-    do {                                            \
-        {vector* v = unused_refs();                \
+    do {                                          \
+        {vector* v = unused_refs();               \
         mark_and_sweep(v);                        \
         vector_destroy(v);                        \
         set_destroy(in_use);                      \
-        {callback}                                  \
-        exit(ret_code);}                           \
+        {callback}                                \
+        exit(ret_code);}                          \
     } while (0)
 #endif
 

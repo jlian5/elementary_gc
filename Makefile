@@ -12,6 +12,7 @@ EXES=$(patsubst %.c,%,$(foreach tester,$(TESTERS),$(patsubst testers/%,testers_e
 OBJS= gc.o
 
 CC=clang
+# make it so that you can #include "set.h"  and #include "gc.h" directly
 INCLUDES=-I./includes/ -I./
 WARNINGS= -Wall -Wextra -Werror -Wno-error=unused-parameter -Wmissing-declarations -Wmissing-variable-declarations
 
@@ -53,7 +54,7 @@ scan_mreplace: $(TESTERS_EXE_DIR)/stack_scan
 scan_both: $(TESTERS_EXE_DIR)/stack_scan
 	@echo ----------------------------BELOW IS mreplace-------------------
 	./mreplace $(TESTERS_EXE_DIR)/stack_scan
-	@echo ----------------------------BELOW IS GLIBC-------------------
+	@echo ----------------------------BELOW IS GLIBC----------------------
 	$(TESTERS_EXE_DIR)/stack_scan
 
 

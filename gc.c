@@ -1,6 +1,6 @@
-#include "gc.h"
 #include "vector.h"
-#include "includes/set.h"
+#include "set.h"
+#include "gc.h"
 
 #include <stdio.h>
 #include <malloc.h>
@@ -120,10 +120,10 @@ void mark_and_sweep(generation *g)
     //check to see if mark and sweep should be called on next generation
     check_mark_and_sweep(g->next);
 
-    vector_destory(black_slots);
-    vector_destory(grey_slots);
+    vector_destroy(black_slots);
+    vector_destroy(grey_slots);
     vector_destroy(white_slots);
-    vector_destory(stack);
+    vector_destroy(stack);
 }
 #else
 void mark_and_sweep(vector *v) {
