@@ -2,8 +2,8 @@
 #include <malloc.h>
 #include <unistd.h>
 
-#include "../includes/set.h"
-#include "../gc.h"
+#include "set.h"
+#include "gc.h"
 
 int f();
 
@@ -49,12 +49,16 @@ int main() {
 int f() {
     puts("---------------- in f()-------------------------");
     int* a = gc_malloc(sizeof(int));
+    (void)a;
     // printf("a addr: %p\n", a);
     int* b = gc_malloc(sizeof(int));
+    (void)b;
     // printf("b addr: %p\n", b);
 
     int* c = gc_malloc(sizeof(int));
+    (void)c;
     int* d = gc_malloc(sizeof(int));
+    (void)d;
 
 
 

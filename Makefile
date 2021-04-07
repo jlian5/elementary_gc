@@ -2,12 +2,17 @@
 
 TESTERS_DIR=testers
 TESTERS_EXE_DIR=testers_exe
+OBJS_DIR=.objs
 
+# get the name of all files inside testers/
 TESTERS=$(filter %.c, $(shell find $(TESTERS_DIR) -type f 2>/dev/null))
+# fix the name of the files inside testers/ by removing the .c and changing the directory to be testers_exe/
 EXES=$(patsubst %.c,%,$(foreach tester,$(TESTERS),$(patsubst testers/%,testers_exe/%,$(tester))))
 
+OBJS= gc.o
+
 CC=clang
-INCLUDES=-I./includes/
+INCLUDES=-I./includes/ -I./
 WARNINGS= -Wall -Wextra -Werror -Wno-error=unused-parameter -Wmissing-declarations -Wmissing-variable-declarations
 
 CFLAGS_COMMON=$(INCLUDES) $(WARNINGS) -std=c99 -D_GNU_SOURCE
@@ -24,8 +29,17 @@ all: $(EXES)
 $(TESTERS_EXE_DIR):
 	@mkdir -p $@
 
-$(TESTERS_EXE_DIR)/%: $(TESTERS_DIR)/%.c
-	$(LD) $^ -o $@ $(LDFLAGS)
+$(OBJS_DIR):
+	@mkdir -p $@
+
+$(TESTERS_EXE_DIR)/%: $(TESTERS_EXE_DIR) $(OBJS_DIR)/gc.o $(OBJS_DIR)/%.o
+	$(LD) $(word 2,$^) $(word 3,$^) -o $@ $(LDFLAGS)
+
+$(OBJS_DIR)/gc.o: $(OBJS_DIR)
+	$(CC) $(CFLAGS_DEBUG) -c gc.c -o $@
+
+$(OBJS_DIR)/%.o: $(OBJS_DIR) $(TESTERS_DIR)/%.c
+	$(CC) $(CFLAGS_DEBUG) -c $(word 2,$^) -o $@
 
 .PHONY: scan
 scan: $(TESTERS_EXE_DIR)/stack_scan

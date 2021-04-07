@@ -4,13 +4,13 @@
  */
 #include <stdio.h>
 
-#include "../gc.h"
+#include "gc.h"
 
 #define TOTAL_ALLOCS 5 // * 1024 * 1024
 
-int main(int argc, char *argv[]) {
+int main(void) {
     GC_INIT();
-    malloc(1);
+    gc_malloc(1);
 
     int i;
     int **arr = gc_malloc(TOTAL_ALLOCS * sizeof(int *));

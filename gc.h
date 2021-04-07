@@ -1,7 +1,8 @@
-#include "includes/vector.h"
-#include "includes/set.h"
+#include "vector.h"
+#include "set.h"
 
 #include <unistd.h>
+#include <stdio.h>
 
 typedef struct metaData {
     int isFree;
@@ -9,10 +10,11 @@ typedef struct metaData {
 } metaData;
 
 
-void** base_stack;
-void* base_heap;
-set* in_use;
+extern void** base_stack;
+extern void* base_heap;
+extern set* in_use;
 
+#ifndef USE_MARK_SWEEP
 #define GC_INIT() \
     do {                                            \
         {base_stack = __builtin_frame_address(0);  \
@@ -39,67 +41,21 @@ set* in_use;
         {callback}                                  \
         exit(ret_code);}                           \
     } while (0)
-
+#endif
 
 /**
  * This function should be called immediately before return to see the unused stack references in a function that is about to return. 
  * Then the vector that contains these references can be used to do garbage collecting.
  **/
-vector* unused_refs() {
-    void** caller_stack = __builtin_frame_address(1); //this is the frame of the function that called the function to be cleaned up
-    void** curr_stack = __builtin_frame_address(0); //this is the frame of the function that we need to clean
-    void* curr_heap = (void*) sbrk(0); //current heap ptr
+vector* unused_refs();
 
-    set* caller_refs = shallow_set_create(); 
+#ifdef USE_MARK_SWEEP
+void mark_and_sweep(generation *g);
+#else
+void mark_and_sweep(vector *v);
+#endif
 
-    //scan through the stack frame excluding curr_stack to see all the references that were saved.
-    void** ptr = caller_stack; 
-    while(ptr < base_stack) {
-        if(*ptr >=  base_heap && *ptr < curr_heap) {
-            set_add(caller_refs, *ptr);
-        }
-        ptr++;
-    }
-
-    set* unused_refs = shallow_set_create();
-    
-    //scan through the stack frame to be cleaned up and see if any unsaved refs exist.
-    ptr = curr_stack;
-    while(ptr < caller_stack) {
-        if(*ptr >=  base_heap && *ptr < curr_heap) {
-            if(!set_contains(caller_refs, *ptr) && !set_contains(unused_refs, *ptr)) 
-                set_add(unused_refs, *ptr);
-        }
-        ptr++;
-    }
-    vector* unused_refs_vec = set_elements(unused_refs);
-    set_destroy(caller_refs);
-    set_destroy(unused_refs);
-
-    return unused_refs_vec; //TODO used this vector to see if any of these unused_refs point to used memory, if so free them.
-}
-
-void *gc_malloc(size_t size) {
-    metaData *meta = malloc(sizeof(metaData) + size);
-    printf("malloced: %p\n", meta);
-    meta->isFree = 0;
-    // meta->ptr = (void *)meta + sizeof(metaData);
-    set_add(in_use, meta->ptr);
-    return meta->ptr;
-}
-
-void mark_and_sweep(vector *v) {
-    size_t size = vector_size(v);
-    //puts("b");
-    for(size_t i = 0; i < size; i++) {
-        if(!set_contains(in_use, vector_get(v, i))) continue;
-        metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
-        if(!(meta->isFree)){
-            // puts("a");
-            printf("freed: %p\n", meta);
-            // printf("contained data: %d\n", *(int*)meta->ptr);
-            
-            free(meta);
-        }
-    }
-}
+void *gc_malloc(size_t);
+void *gc_realloc(void *, size_t);
+void *gc_calloc(size_t, size_t);
+void gc_free(void *);

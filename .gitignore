@@ -1,2 +1,3 @@
-.vscode/*
-testers_exe/*
+.vscode/
+testers_exe/
+.objs/

@@ -4,11 +4,11 @@
  */
 #include <stdio.h>
 
-#include "../gc.h"
+#include "gc.h"
 
 #define NUM_CYCLES 100
 
-int main(int argc, char *argv[]) {
+int main(void) {
     GC_INIT();
     int i;
     for (i = 0; i < NUM_CYCLES; i++) {

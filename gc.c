@@ -32,15 +32,16 @@ typedef struct generation
     int max_size;
 
     //next generation
-    generation *next;
+    struct generation *next;
 
 } generation;
 
 //Used for stack searching
-static void** base_stack;
-static void* base_heap;
-static set* in_use;
+void** base_stack;
+void* base_heap;
+set* in_use;
 
+#ifdef USE_MARK_SWEEP
 //Generation vectors
 //could change this to vectors of generaation vectors
 static generation *gen0;
@@ -124,7 +125,25 @@ void mark_and_sweep(generation *g)
     vector_destroy(white_slots);
     vector_destory(stack);
 }
+#else
+void mark_and_sweep(vector *v) {
+    size_t size = vector_size(v);
+    //puts("b");
+    for(size_t i = 0; i < size; i++) {
+        if(!set_contains(in_use, vector_get(v, i))) continue;
+        metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
+        if(!(meta->isFree)){
+            // puts("a");
+            printf("freed: %p\n", meta);
+            // printf("contained data: %d\n", *(int*)meta->ptr);
+            
+            free(meta);
+        }
+    }
+}
+#endif
 
+#ifdef USE_MARK_SWEEP
 void *gc_malloc(size_t request_size)
 {
 
@@ -147,6 +166,16 @@ void *gc_malloc(size_t request_size)
     //return a pointer to the requested data
     return ptr;
 }
+#else
+void *gc_malloc(size_t size) {
+    metaData *meta = malloc(sizeof(metaData) + size);
+    printf("malloced: %p\n", meta);
+    meta->isFree = 0;
+    // meta->ptr = (void *)meta + sizeof(metaData);
+    set_add(in_use, meta->ptr);
+    return meta->ptr;
+}
+#endif
 
 void *gc_calloc(size_t num_elements, size_t element_size)
 {
@@ -165,6 +194,7 @@ void *gc_realloc(void *ptr, size_t request_size)
         return gc_malloc(request_size);
     }
 
+#ifdef USE_MARK_SWEEP
     int i;
     int size = gen0->curr_size;
     for (i = 0; i < size; i++)
@@ -180,15 +210,18 @@ void *gc_realloc(void *ptr, size_t request_size)
             return mem;
         }
     }
+#endif
 
     return NULL;
 }
 
 void gc_free(void *ptr)
 {
+    (void)ptr;
     // no-op by design
 }
 
+#ifdef USE_MARK_SWEEP
 //checks whether g should be mark and sweep and call it if it does
 void check_mark_and_sweep(generation *g)
 {
@@ -209,6 +242,7 @@ void check_mark_and_sweep(generation *g)
 
     return;
 }
+#endif
 
 /**
  * This function should be called immediately before return to see the unused stack references in a function that is about to return. 
