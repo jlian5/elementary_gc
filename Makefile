@@ -59,5 +59,5 @@ scan_both: $(TESTERS_EXE_DIR)/stack_scan
 
 .PHONY: clean
 clean:
-	rm -rf $(EXES)
+	rm -rf $(TESTERS_EXE_DIR) $(OBJS_DIR)
 

@@ -11,7 +11,7 @@
 #define MIN_ALLOC_SIZE 24
 #define MAX_ALLOC_SIZE 100 * K
 #define CHANCE_OF_FREE 95
-#define CHANCE_OF_gc_realloc 50
+#define CHANCE_OF_REALLOC 50
 #define TOTAL_ALLOCS 400
 
 int main(void) {
@@ -54,7 +54,7 @@ int main(void) {
                 data_written = 1;
             }
 
-            if (rand() % 100 < CHANCE_OF_gc_realloc)
+            if (rand() % 100 < CHANCE_OF_REALLOC)
                 gc_realloc_ptr = ptr;
             else {
                 *((void **)(ptr + size - sizeof(void *))) =
