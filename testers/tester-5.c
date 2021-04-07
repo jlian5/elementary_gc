@@ -43,7 +43,6 @@ int main(void) {
 
         if (ptr == NULL) {
             GC_EXIT(1, {puts("Memory failed to allocate!\n");});
-            return 1;
         }
 
         if (rand() % 100 < CHANCE_OF_FREE)
@@ -70,7 +69,6 @@ int main(void) {
         if (*((void **)dictionary[i]) != &dictionary[i]) {
             GC_EXIT(100, {puts("Memory failed to contain correct data after many allocations "
                 "(beginning of segment)!\n");});
-            return 100;
         }
 
         if (*((void **)(dictionary[i] + dictionary_elem_size[i] -

@@ -247,7 +247,7 @@ void check_mark_and_sweep(generation *g)
 /**
  * This function should be called immediately before return to see the unused stack references in a function that is about to return. 
  * Then the vector that contains these references can be used to do garbage collecting.
- **/
+ */
 vector* unused_refs() {
     void** caller_stack = __builtin_frame_address(1); //this is the frame of the function that called the function to be cleaned up
     void** curr_stack = __builtin_frame_address(0); //this is the frame of the function that we need to clean
@@ -280,4 +280,10 @@ vector* unused_refs() {
     set_destroy(unused_refs);
 
     return unused_refs_vec; //TODO used this vector to see if any of these unused_refs point to used memory, if so free them.
+}
+
+void free_in_use(set *in_use_set) {
+    SET_FOR_EACH(in_use_set, ptr, {
+        free(ptr - sizeof(metaData));
+    });
 }

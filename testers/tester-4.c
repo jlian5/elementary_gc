@@ -26,7 +26,7 @@ void *reduce(void *ptr, int size) {
                             "allocations!\n");});
         }
 
-        // free(ptr2);
+        gc_free(ptr2);
         ptr1 = gc_realloc(ptr1, size);
 
         if (*((int *)ptr1) != size / 2) {
@@ -49,12 +49,10 @@ int main(void) {
     while (size > STOP_MALLOC_SIZE) {
         void *ptr = gc_malloc(size);
         ptr = reduce(ptr, size / 2);
-        // free(ptr);
+        gc_free(ptr);
 
         size /= 2;
     }
 
-    fprintf(stderr, "Memory was allocated, used, and freed!\n");
-    GC_EXIT(0, {puts("end of main");});
-    return 0;
+    GC_EXIT(0, {puts("Memory was allocated, used, and freed!\n");});
 }

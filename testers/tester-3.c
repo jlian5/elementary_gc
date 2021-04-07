@@ -19,16 +19,13 @@ int main(void) {
     for (i = 0; i < TOTAL_ALLOCS; i++) {
         ptr = gc_malloc(ALLOC_SIZE);
         if (ptr == NULL) {
-            fprintf(stderr, "Memory failed to allocate!\n");
-            return 1;
+            GC_RETURN(1, {puts("Memory failed to allocate!\n");});
         }
 
         memset(ptr, 0xab, ALLOC_SIZE);
 
-        // free(ptr);
+        gc_free(ptr);
     }
 
-    fprintf(stderr, "Memory was allocated and freed!\n");
-    GC_EXIT(0,{puts("end of main");});
-    return 0;
+    GC_EXIT(0,{puts("Memory was allocated and freed!\n");});
 }

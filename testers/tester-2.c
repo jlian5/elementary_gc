@@ -15,15 +15,13 @@ int main(void) {
     int i;
     int **arr = gc_malloc(TOTAL_ALLOCS * sizeof(int *));
     if (arr == NULL) {
-        fprintf(stderr, "Memory failed to allocate!\n");
-        return 1;
+        GC_RETURN(1, {puts("Memory failed to allocate!\n");});
     }
 
     for (i = 0; i < TOTAL_ALLOCS; i++) {
         arr[i] = gc_malloc(sizeof(int));
         if (arr[i] == NULL) {
-            fprintf(stderr, "Memory failed to allocate!\n");
-            return 1;
+            GC_RETURN(1, {puts("Memory failed to allocate!\n");});
         }
 
         *(arr[i]) = i;
@@ -31,12 +29,9 @@ int main(void) {
 
     for (i = 0; i < TOTAL_ALLOCS; i++) {
         if (*(arr[i]) != i) {
-            fprintf(stderr, "Memory failed to contain correct data after many "
-                            "allocations!\n");
-            return 2;
+            GC_RETURN(2, {puts("Memory failed to contain correct data after many allocations!\n");});
         }
     }
 
-    GC_EXIT(0, {;});
-    return 0;
+    GC_EXIT(0, {puts("done");});
 }

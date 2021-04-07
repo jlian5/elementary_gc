@@ -15,13 +15,11 @@ int main(void) {
         int *ptr = gc_malloc(sizeof(int));
 
         if (ptr == NULL) {
-            fprintf(stderr, "Memory failed to allocate!\n");
-            return 1;
+            GC_RETURN(1, {puts("Memory failed to allocate!\n");});
         }
 
         *ptr = 4;
     }
 
     GC_EXIT(0, {fprintf(stdout,"done");});
-    return 0;
 }

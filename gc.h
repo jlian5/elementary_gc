@@ -10,9 +10,9 @@ typedef struct metaData {
 } metaData;
 
 
-extern void** base_stack;
-extern void* base_heap;
-extern set* in_use;
+extern void **base_stack;
+extern void *base_heap;
+extern set *in_use;
 
 #ifndef USE_MARK_SWEEP
 #define GC_INIT() \
@@ -37,6 +37,7 @@ extern set* in_use;
         {vector* v = unused_refs();               \
         mark_and_sweep(v);                        \
         vector_destroy(v);                        \
+        free_in_use(in_use);                      \
         set_destroy(in_use);                      \
         {callback}                                \
         exit(ret_code);}                          \
@@ -44,10 +45,16 @@ extern set* in_use;
 #endif
 
 /**
- * This function should be called immediately before return to see the unused stack references in a function that is about to return. 
+ * This function should be called immediately before return to see the unused stack references
+ * in a function that is about to return. 
  * Then the vector that contains these references can be used to do garbage collecting.
- **/
-vector* unused_refs();
+ */
+vector *unused_refs();
+
+/**
+ * Will free all malloc'ed memory given the in_use set.
+ */
+void free_in_use(set *);
 
 #ifdef USE_MARK_SWEEP
 void mark_and_sweep(generation *g);
@@ -55,7 +62,19 @@ void mark_and_sweep(generation *g);
 void mark_and_sweep(vector *v);
 #endif
 
+/**
+ * Version of malloc for this garbage collector.
+ */
 void *gc_malloc(size_t);
+/**
+ * Version of realloc for this garbage collector.
+ */
 void *gc_realloc(void *, size_t);
+/**
+ * Version of calloc for this garbage collector.
+ */
 void *gc_calloc(size_t, size_t);
+/**
+ * Version of free for this garbage collector. (no-op)
+ */
 void gc_free(void *);
