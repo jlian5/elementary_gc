@@ -283,7 +283,11 @@ vector* unused_refs() {
 }
 
 void free_in_use(set *in_use_set) {
+#ifdef DEBUG
+    fprintf(stderr, "freeing %zu unused references that were found in in_use\n", set_cardinality(in_use_set));
+#endif
     SET_FOR_EACH(in_use_set, ptr, {
-        free(ptr - sizeof(metaData));
+        (void)ptr;
+        // free(ptr - sizeof(metaData));
     });
 }
