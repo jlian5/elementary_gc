@@ -16,7 +16,6 @@ void *reduce(void *ptr, int size) {
 
         if (ptr1 == NULL || ptr2 == NULL) {
             GC_EXIT(1, {puts("Memory failed to allocate!\n");});
-            exit(1);
         }
 
         ptr1 = reduce(ptr1, size / 2);

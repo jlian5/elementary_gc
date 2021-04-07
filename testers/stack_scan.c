@@ -43,7 +43,6 @@ int main() {
     
     //printf("a addr: %p\n", a);
     GC_EXIT(0,{puts("end of main");});
-    return 0;
 }
 
 int f() {
@@ -60,9 +59,6 @@ int f() {
     int* d = gc_malloc(sizeof(int));
     (void)d;
 
-
-
     GC_RETURN(0,{puts("----------------^^f()^^-------------------------");});
-    return 0;
 }
 
