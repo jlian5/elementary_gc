@@ -22,8 +22,8 @@ void *reduce(void *ptr, int size) {
         ptr2 = reduce(ptr2, size / 2);
 
         if (*((int *)ptr1) != size / 2 || *((int *)ptr2) != size / 2) {
-            GC_EXIT(2,{puts("Memory failed to contain correct data after many "
-                            "allocations!\n");});
+            GC_EXIT(2, {puts("Memory failed to contain correct data after many "
+                             "allocations!\n");});
         }
 
         gc_free(ptr2);

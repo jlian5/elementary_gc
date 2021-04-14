@@ -10,38 +10,12 @@
 #define grey  1
 #define black 2
 
-//metadata struct
-typedef struct gc_metadata {
-    int color;
-    void *data;
-} gc_metadata;
-
-typedef struct generation
-{
-
-    // frequency in which we should mark and sweep this generation
-    int rate;
-
-    //vector containing the data
-    vector *data;
-
-    //amount of data in this gen
-    int curr_size;
-
-    //amount of data it should hold before being mark and sweep
-    int max_size;
-
-    //next generation
-    struct generation *next;
-
-} generation;
-
 //Used for stack searching
 void** base_stack;
 void* base_heap;
 set* in_use;
 
-#ifdef USE_MARK_SWEEP
+#ifdef USE_GENERATIONS
 //Generation vectors
 //could change this to vectors of generaation vectors
 static generation *gen0;
@@ -68,7 +42,7 @@ void mark_and_sweep(generation *g)
     //the int vector are placeholder, it should be void pointers
     vector *black_slots = int_vector_create();
     vector *grey_slots = int_vector_create();
-    vector *white_slots = gen0;
+    vector *white_slots = int_vector_create(); // gen0;
 
     // MARK:
 
@@ -136,7 +110,9 @@ void mark_and_sweep(vector *v) {
         }
         else if(!(meta->isFree)) {
             // puts("a");
-            printf("freed: %p\n", meta);
+#ifdef DEBUG
+            fprintf(stderr, "freed: %p\n", meta);
+#endif
             // printf("contained data: %d\n", *(int*)meta->ptr);
             
             free(meta);
@@ -145,7 +121,7 @@ void mark_and_sweep(vector *v) {
 }
 #endif
 
-#ifdef USE_MARK_SWEEP
+#ifdef USE_GENERATIONS
 void *gc_malloc(size_t request_size)
 {
 
@@ -171,7 +147,9 @@ void *gc_malloc(size_t request_size)
 #else
 void *gc_malloc(size_t size) {
     metaData *meta = malloc(sizeof(metaData) + size);
-    printf("malloced: %p\n", meta);
+#ifdef DEBUG
+    fprintf(stderr, "malloced: %p\n", meta);
+#endif
     meta->isFree = 0;
     meta->ptr = (void*)meta + sizeof(metaData);
     set_add(in_use, meta);
@@ -186,7 +164,7 @@ void *gc_calloc(size_t num_elements, size_t element_size) {
     return ptr;
 }
 
-#ifdef USE_MARK_SWEEP
+#ifdef USE_GENERATIONS
 void *gc_realloc(void *ptr, size_t request_size) {
     int i;
     int size = gen0->curr_size;
@@ -208,7 +186,9 @@ void *gc_realloc(void *ptr, size_t request_size) {
     if(set_contains(in_use, meta) && request_size > 0) {
         set_remove(in_use, meta);
         metaData *new_meta = realloc(meta, sizeof(metaData) + request_size);
-        printf("realloced: %p\n", new_meta);
+#ifdef DEBUG
+        fprintf(stderr, "realloced: %p\n", new_meta);
+#endif
         new_meta->isFree = 0;
         new_meta->ptr = (void*)new_meta + sizeof(metaData);
         set_add(in_use, new_meta);
@@ -224,7 +204,7 @@ void gc_free(void *ptr)
     // no-op by design
 }
 
-#ifdef USE_MARK_SWEEP
+#ifdef USE_GENERATIONS
 //checks whether g should be mark and sweep and call it if it does
 void check_mark_and_sweep(generation *g)
 {
