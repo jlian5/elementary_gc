@@ -134,9 +134,9 @@ void mark_and_sweep(vector *v) {
         metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
         if(!(meta->isFree)){
             // puts("a");
-            printf("freed: %p\n", meta);
+            printf("freed: %p\n", meta->ptr);
             // printf("contained data: %d\n", *(int*)meta->ptr);
-            
+            set_remove(in_use, meta->ptr);
             free(meta);
         }
     }
@@ -169,8 +169,10 @@ void *gc_malloc(size_t request_size)
 #else
 void *gc_malloc(size_t size) {
     metaData *meta = malloc(sizeof(metaData) + size);
-    printf("malloced: %p\n", meta);
+    printf("malloced data: %p\n", meta->ptr);
+    // printf("malloced meta: %p\n", meta);
     meta->isFree = 0;
+    meta->size = size;
     // meta->ptr = (void *)meta + sizeof(metaData);
     set_add(in_use, meta->ptr);
     return meta->ptr;
@@ -250,7 +252,7 @@ void check_mark_and_sweep(generation *g)
  */
 vector* unused_refs() {
     void** caller_stack = __builtin_frame_address(1); //this is the frame of the function that called the function to be cleaned up
-    void** curr_stack = __builtin_frame_address(0); //this is the frame of the function that we need to clean
+    // void** curr_stack = __builtin_frame_address(0); //this is the frame of the function that we need to clean
     void* curr_heap = (void*) sbrk(0); //current heap ptr
 
     set* caller_refs = shallow_set_create(); 
@@ -258,28 +260,73 @@ vector* unused_refs() {
     //scan through the stack frame excluding curr_stack to see all the references that were saved.
     void** ptr = caller_stack; 
     while(ptr < base_stack) {
+        // printf("*ptr is %p\n", *ptr);
         if(*ptr >=  base_heap && *ptr < curr_heap) {
-            set_add(caller_refs, *ptr);
+            add_possible_heap_addr(*ptr, caller_refs, curr_heap);
         }
         ptr++;
     }
-
+    
     set* unused_refs = shallow_set_create();
     
     //scan through the stack frame to be cleaned up and see if any unsaved refs exist.
-    ptr = curr_stack;
-    while(ptr < caller_stack) {
-        if(*ptr >=  base_heap && *ptr < curr_heap) {
-            if(!set_contains(caller_refs, *ptr) && !set_contains(unused_refs, *ptr)) 
-                set_add(unused_refs, *ptr);
-        }
-        ptr++;
-    }
+    // ptr = curr_stack;
+    // while(ptr < caller_stack) {
+    //     if(*ptr >=  base_heap && *ptr < curr_heap) {
+    //         scan_possible_heap_addr(*ptr, unused_refs, caller_refs, curr_heap);
+    //     }
+    //     ptr++;
+    // }
+    vector* inuse_vec = set_elements(in_use);
+    VECTOR_FOR_EACH(inuse_vec, i, {
+        if(!set_contains(caller_refs, i)) set_add(unused_refs, i);
+    });
+    
     vector* unused_refs_vec = set_elements(unused_refs);
-    set_destroy(caller_refs);
     set_destroy(unused_refs);
+    set_destroy(caller_refs);
+    
 
-    return unused_refs_vec; //TODO used this vector to see if any of these unused_refs point to used memory, if so free them.
+    return unused_refs_vec; 
+}
+
+//add all suspicious ptrs in the memory region(on the heap) allocated by heap_ptr into the set
+void add_possible_heap_addr(void* heap_ptr, set* s, void* curr_heap) {
+    if(!set_contains(in_use, heap_ptr) || set_contains(s, heap_ptr)) return;
+    
+    set_add(s, heap_ptr);
+
+    metaData *meta = heap_ptr - sizeof(metaData);
+    size_t scanning_size = meta->size; 
+    printf("%zu\n", scanning_size);
+
+    
+    for(size_t i = 0; i < scanning_size; i++) {
+        void* ptr = *(void**) (heap_ptr+i);
+        if(ptr >=  base_heap && ptr< curr_heap){
+            
+            add_possible_heap_addr(ptr, s, curr_heap);
+        }
+    }
+
+}
+
+//same as add_possible_heap_addr but this time it will add if it is not in caller_refs
+void scan_possible_heap_addr(void* heap_ptr, set* possible_refs,set* caller_refs, void* curr_heap) {
+    printf("heap ptr is %p\n", heap_ptr);
+    if(!set_contains(in_use, heap_ptr)) return;
+    if(!set_contains(caller_refs, heap_ptr) && !set_contains(possible_refs, heap_ptr)) set_add(possible_refs, heap_ptr);
+    metaData *meta = heap_ptr - sizeof(metaData);
+    size_t scanning_size = meta->size;
+    // printf("size is %zu\n", scanning_size);
+    for(size_t i = 0; i < scanning_size; i++) {
+        void* ptr = *(void**) (heap_ptr+i);
+        // printf("loop ptr is %p\n", ptr);
+        if(ptr >=  base_heap && ptr < curr_heap){
+            scan_possible_heap_addr(ptr, possible_refs, caller_refs,curr_heap);
+        }
+    }
+
 }
 
 void free_in_use(set *in_use_set) {

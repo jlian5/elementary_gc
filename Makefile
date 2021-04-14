@@ -16,8 +16,8 @@ CC=clang
 INCLUDES=-I./includes/ -I./
 WARNINGS= -Wall -Wextra -Werror -Wno-error=unused-parameter -Wmissing-declarations -Wmissing-variable-declarations
 
-CFLAGS_COMMON=$(INCLUDES) $(WARNINGS) -std=c99 -D_GNU_SOURCE
-CFLAGS_RELEASE=$(CFLAGS_COMMON) -O2
+CFLAGS_COMMON=$(INCLUDES) $(WARNINGS) -std=c99 -D_GNU_SOURCE 
+CFLAGS_RELEASE=$(CFLAGS_COMMON) -O2 
 CFLAGS_DEBUG=$(CFLAGS_COMMON) -O0 -g -DDEBUG
 
 LD=clang
@@ -34,7 +34,7 @@ $(OBJS_DIR):
 	@mkdir -p $@
 
 $(TESTERS_EXE_DIR)/%: $(TESTERS_EXE_DIR) $(OBJS_DIR)/gc.o $(OBJS_DIR)/%.o
-	$(LD) $(word 2,$^) $(word 3,$^) -o $@ $(LDFLAGS)
+	$(LD) $(word 2,$^) $(word 3,$^) -o $@ $(LDFLAGS) 
 
 $(OBJS_DIR)/gc.o: $(OBJS_DIR)
 	$(CC) $(CFLAGS_DEBUG) -c gc.c -o $@

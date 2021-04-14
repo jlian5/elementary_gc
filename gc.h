@@ -6,6 +6,7 @@
 
 typedef struct metaData {
     int isFree;
+    size_t size;
     char ptr[0];
 } metaData;
 
@@ -78,3 +79,6 @@ void *gc_calloc(size_t, size_t);
  * Version of free for this garbage collector. (no-op)
  */
 void gc_free(void *);
+
+void add_possible_heap_addr(void* heap_ptr, set* s, void* curr_heap) ;
+void scan_possible_heap_addr(void* heap_ptr, set* possible_refs,set* caller_refs, void* curr_heap);
