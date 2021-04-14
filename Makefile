@@ -25,24 +25,15 @@ LDFLAGS = -Llibs/ $(foreach lib,$(PROVIDED_LIBRARIES),-l$(lib)) -lm
 
 all: release
 
-release: $(EXES)
+release: clean $(EXES)
 
-debug: $(addsuffix -debug,$(EXES))
+debug: clean $(addsuffix -debug,$(EXES))
 
 $(TESTERS_EXE_DIR):
 	@mkdir -p $@
 
 $(OBJS_DIR):
 	@mkdir -p $@
-
-$(TESTERS_EXE_DIR)/%-debug: $(TESTERS_EXE_DIR) $(OBJS_DIR)/gc.o $(OBJS_DIR)/%-debug.o
-	$(LD) $(word 2,$^) $(word 3,$^) -o $@ $(LDFLAGS)
-
-$(OBJS_DIR)/gc-debug.o: $(OBJS_DIR)
-	$(CC) $(CFLAGS_DEBUG) -c gc.c -o $@
-
-$(OBJS_DIR)/%-debug.o: $(OBJS_DIR) $(TESTERS_DIR)/%.c
-	$(CC) $(CFLAGS_DEBUG) -c $(word 2,$^) -o $@
 
 $(TESTERS_EXE_DIR)/%: $(TESTERS_EXE_DIR) $(OBJS_DIR)/gc.o $(OBJS_DIR)/%.o
 	$(LD) $(word 2,$^) $(word 3,$^) -o $@ $(LDFLAGS)
@@ -52,6 +43,15 @@ $(OBJS_DIR)/gc.o: $(OBJS_DIR)
 
 $(OBJS_DIR)/%.o: $(OBJS_DIR) $(TESTERS_DIR)/%.c
 	$(CC) $(CFLAGS_RELEASE) -c $(word 2,$^) -o $@
+
+$(TESTERS_EXE_DIR)/%-debug: $(TESTERS_EXE_DIR) $(OBJS_DIR)/gc-debug.o $(OBJS_DIR)/%-debug.o
+	$(LD) $(word 2,$^) $(word 3,$^) -o $@ $(LDFLAGS)
+
+$(OBJS_DIR)/gc-debug.o: $(OBJS_DIR)
+	$(CC) $(CFLAGS_DEBUG) -c gc.c -o $@
+
+$(OBJS_DIR)/%-debug.o: $(OBJS_DIR) $(TESTERS_DIR)/%.c
+	$(CC) $(CFLAGS_DEBUG) -c $(word 2,$^) -o $@
 
 .PHONY: scan
 scan: $(TESTERS_EXE_DIR)/stack_scan

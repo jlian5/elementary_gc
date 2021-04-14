@@ -14,7 +14,7 @@ int main(void) {
     int i;
     for (i = 0; i < ITERS; i++) {
         // Write to end
-        char *a = calloc(SIZE, sizeof(char));
+        char *a = gc_calloc(SIZE, sizeof(char));
         if (!a)
             GC_RETURN(1, {;});
 
@@ -25,11 +25,11 @@ int main(void) {
 
         gc_free(a);
 
-        char *b = calloc(SIZE / 2, sizeof(char));
+        char *b = gc_calloc(SIZE / 2, sizeof(char));
         verify_clean(b, SIZE / 2);
         verify_write(b, SIZE / 2);
 
-        char *c = calloc(SIZE / 4, sizeof(char));
+        char *c = gc_calloc(SIZE / 4, sizeof(char));
         verify_clean(c, SIZE / 4);
         verify_write(c, SIZE / 4);
 
