@@ -130,9 +130,11 @@ void mark_and_sweep(vector *v) {
     size_t size = vector_size(v);
     //puts("b");
     for(size_t i = 0; i < size; i++) {
-        if(!set_contains(in_use, vector_get(v, i))) continue;
-        metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
-        if(!(meta->isFree)){
+        metaData *meta = (void*)vector_get(v, i);
+        if(!set_contains(in_use, meta)) {
+            continue;
+        }
+        else if(!(meta->isFree)) {
             // puts("a");
             printf("freed: %p\n", meta);
             // printf("contained data: %d\n", *(int*)meta->ptr);
@@ -171,49 +173,50 @@ void *gc_malloc(size_t size) {
     metaData *meta = malloc(sizeof(metaData) + size);
     printf("malloced: %p\n", meta);
     meta->isFree = 0;
-    // meta->ptr = (void *)meta + sizeof(metaData);
-    set_add(in_use, meta->ptr);
+    meta->ptr = (void*)meta + sizeof(metaData);
+    set_add(in_use, meta);
     return meta->ptr;
 }
 #endif
 
-void *gc_calloc(size_t num_elements, size_t element_size)
-{
+void *gc_calloc(size_t num_elements, size_t element_size) {
     size_t n = num_elements * element_size;
-    void *ptr = gc_malloc(num_elements * element_size);
+    void *ptr = gc_malloc(n);
     bzero(ptr, n);
     return ptr;
 }
 
-//double check this works
-void *gc_realloc(void *ptr, size_t request_size)
-{
-
-    if (ptr == NULL)
-    {
-        return gc_malloc(request_size);
-    }
-
 #ifdef USE_MARK_SWEEP
+void *gc_realloc(void *ptr, size_t request_size) {
     int i;
     int size = gen0->curr_size;
-    for (i = 0; i < size; i++)
-    {
-        if (ptr == vector_get(gen0, i))
-        {
-
+    for (i = 0; i < size; i++) {
+        if (ptr == vector_get(gen0, i)) {
             void *mem = realloc(ptr, request_size);
             vector_set(gen0->data, i, mem);
-
             check_mark_and_sweep(gen0);
-
             return mem;
         }
     }
-#endif
-
+}
+#else
+void *gc_realloc(void *ptr, size_t request_size) {
+    if (ptr == NULL) {
+        return gc_malloc(request_size);
+    }
+    metaData *meta = ptr - sizeof(metaData);
+    if(set_contains(in_use, meta) && request_size > 0) {
+        set_remove(in_use, meta);
+        metaData *new_meta = realloc(meta, sizeof(metaData) + request_size);
+        printf("realloced: %p\n", new_meta);
+        new_meta->isFree = 0;
+        new_meta->ptr = (void*)new_meta + sizeof(metaData);
+        set_add(in_use, new_meta);
+        return new_meta->ptr;
+    }
     return NULL;
 }
+#endif
 
 void gc_free(void *ptr)
 {

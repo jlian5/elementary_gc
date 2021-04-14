@@ -6,7 +6,7 @@
 
 typedef struct metaData {
     int isFree;
-    char ptr[0];
+    void *ptr;
 } metaData;
 
 
