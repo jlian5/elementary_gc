@@ -5,6 +5,9 @@ Garbage collector for SP21 CS296-41 project
 
 (sorted bottom up)
 
+## Edge Cases
+- [ ] [WIP] Find and list cases that don't work
+
 ## Memory compaction
 - [ ] Implement memory compaction for free objects
 
@@ -18,9 +21,9 @@ Garbage collector for SP21 CS296-41 project
 - [ ] Run mark and sweep collector every `malloc`
 
 ## GC Algorithm Implementation
-- [ ] Basic object allocation + graph creation
+- [ ] [WIP] Basic object allocation + graph creation
+- [x] [WIP] Mark and sweep algorithm code
 - [x] Mark and sweep algorithm skeleton
-- [x] Mark and sweep algorithm code
 
 ## Initial Setup
 - [x] Setup makefile
