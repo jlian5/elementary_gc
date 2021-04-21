@@ -9,15 +9,15 @@ typedef struct _test_struct{
     size_t mem_size;
     void* ptr_to_heap;
 } test_struct;
-int f();
+void* f();
 
 int main() {
     GC_INIT();
 
     // int* array[10];
     // for(size_t i = 0; i < 10; i ++) array[i] = gc_malloc(sizeof (int));
-    void* ptr;
-    f(&ptr);
+    void* ptr = f();
+    (void)ptr;
 
     puts("---------------- in main()-------------------------");
 
@@ -52,7 +52,7 @@ int main() {
 
 }
 
-int f(void** p) {
+void* f() {
     puts("---------------- in f()-------------------------");
     int* a _U_= gc_malloc(sizeof(int));
     
@@ -63,11 +63,11 @@ int f(void** p) {
 
     int* c _U_= gc_malloc(sizeof(int));
     int* d _U_= gc_malloc(sizeof(int));
-    *p = gc_malloc(2);
-    printf("p is %p\n", *p);
+    void*p = gc_malloc(2);
+    printf("p is %p\n", p);
 
 
 
-    GC_RETURN(0,{puts("----------------^^f()^^-------------------------");});
+    GC_RETURN((void*)2,{puts("----------------^^f()^^-------------------------");});
     return 0;
 }

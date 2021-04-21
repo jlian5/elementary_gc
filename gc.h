@@ -26,7 +26,7 @@ extern set *in_use;
 
 #define GC_RETURN(ret_code,callback) \
     do {                                          \
-        {vector* v = unused_refs();               \
+        {vector* v = unused_refs(ret_code);               \
         mark_and_sweep(v);                        \
         vector_destroy(v);                        \
         {callback}                                \
@@ -35,7 +35,7 @@ extern set *in_use;
 
 #define GC_EXIT(ret_code, callback) \
     do {                                          \
-        {vector* v = unused_refs();               \
+        {vector* v = unused_refs(ret_code);               \
         mark_and_sweep(v);                        \
         vector_destroy(v);                        \
         free_in_use(in_use);                      \
@@ -50,7 +50,7 @@ extern set *in_use;
  * in a function that is about to return. 
  * Then the vector that contains these references can be used to do garbage collecting.
  */
-vector *unused_refs();
+vector *unused_refs(void* ret_val);
 
 /**
  * Will free all malloc'ed memory given the in_use set.

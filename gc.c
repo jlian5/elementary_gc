@@ -250,12 +250,15 @@ void check_mark_and_sweep(generation *g)
  * This function should be called immediately before return to see the unused stack references in a function that is about to return. 
  * Then the vector that contains these references can be used to do garbage collecting.
  */
-vector* unused_refs() {
+vector* unused_refs(void* ret_val) {
     void** caller_stack = __builtin_frame_address(1); //this is the frame of the function that called the function to be cleaned up
     // void** curr_stack = __builtin_frame_address(0); //this is the frame of the function that we need to clean
     void* curr_heap = (void*) sbrk(0); //current heap ptr
 
     set* caller_refs = shallow_set_create(); 
+    if(ret_val >= base_heap && ret_val < curr_heap){
+        add_possible_heap_addr(ret_val, caller_refs, curr_heap);
+    }
 
     //scan through the stack frame excluding curr_stack to see all the references that were saved.
     void** ptr = caller_stack; 
