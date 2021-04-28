@@ -2,6 +2,7 @@
 #include "set.h"
 
 #include <unistd.h>
+#include <stdint.h>
 #include <stdio.h>
 
 // to turn on generations code
@@ -56,16 +57,16 @@ extern set *in_use;
 
 #define GC_RETURN(ret_code,callback) \
     do {                                          \
-        {vector* v = unused_refs((void*)ret_code);               \
+        {vector* v = unused_refs((void*)(uintptr_t)(ret_code));               \
         mark_and_sweep(v);                        \
         vector_destroy(v);                        \
         {callback}                                \
-        return (void*)ret_code;}                         \
+        return (ret_code);}                         \
     } while (0)
 
 #define GC_EXIT(ret_code, callback) \
     do {                                          \
-        {vector* v = unused_refs(ret_code);               \
+        {vector* v = unused_refs((void*)(uintptr_t)(ret_code));               \
         mark_and_sweep(v);                        \
         vector_destroy(v);                        \
         free_in_use(in_use);                      \

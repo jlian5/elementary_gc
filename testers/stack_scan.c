@@ -10,12 +10,14 @@ typedef struct _test_struct{
     void* ptr_to_heap;
 } test_struct;
 void* f();
+int factorial(int);
 
 int main() {
     GC_INIT();
 
     // int* array[10];
     // for(size_t i = 0; i < 10; i ++) array[i] = gc_malloc(sizeof (int));
+    factorial(3);
     void* _U_ ptr = f();
 
     puts("---------------- in main()-------------------------");
@@ -52,6 +54,16 @@ int main() {
 
 }
 
+int factorial(int num) {
+    printf("---------------- in factorial() %d-------------------------\n", num);
+    gc_malloc(3);
+    if (num <= 1) {
+        GC_RETURN(num, {printf("---------------- ^^in factorial() %d-------------------------\n", num);});
+    }
+    int res = num * factorial(num - 1);
+    GC_RETURN(res, {printf("---------------- ^^in factorial() %d-------------------------\n", num);});
+}
+
 void* f() {
     puts("---------------- in f()-------------------------");
     int* a _U_= gc_malloc(sizeof(int));
@@ -72,6 +84,6 @@ void* f() {
 
 
 
-    GC_RETURN(3,{puts("----------------^^f()^^-------------------------");});
+    GC_RETURN((void*)3,{puts("----------------^^f()^^-------------------------");});
     return 0;
 }
