@@ -5,48 +5,17 @@
 #include <stdint.h>
 #include <stdio.h>
 
-// to turn on generations code
-// #define USE_GENERATIONS
 
-#ifdef USE_GENERATIONS
-//metadata struct
-typedef struct gc_metadata {
-    int color;
-    void *data;
-} gc_metadata;
-
-typedef struct generation
-{
-
-    // frequency in which we should mark and sweep this generation
-    int rate;
-
-    //vector containing the data
-    vector *data;
-
-    //amount of data in this gen
-    int curr_size;
-
-    //amount of data it should hold before being mark and sweep
-    int max_size;
-
-    //next generation
-    struct generation *next;
-
-} generation;
-#else
 typedef struct metaData {
     int isFree;
     size_t size;
     void* ptr;
 } metaData;
-#endif
 
 extern void **base_stack;
 extern void *base_heap;
 extern set *in_use;
 
-#ifndef USE_GENERATIONS
 #define GC_INIT() \
     do {                                          \
         {base_stack = __builtin_frame_address(0); \
@@ -88,11 +57,7 @@ vector *unused_refs(void* ret_val);
  */
 void free_in_use(set *);
 
-#ifdef USE_GENERATIONS
-void mark_and_sweep(generation *g);
-#else
 void mark_and_sweep(vector *v);
-#endif
 
 /**
  * Version of malloc for this garbage collector.
