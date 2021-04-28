@@ -56,11 +56,11 @@ extern set *in_use;
 
 #define GC_RETURN(ret_code,callback) \
     do {                                          \
-        {vector* v = unused_refs(ret_code);               \
+        {vector* v = unused_refs((void*)ret_code);               \
         mark_and_sweep(v);                        \
         vector_destroy(v);                        \
         {callback}                                \
-        return ret_code;}                         \
+        return (void*)ret_code;}                         \
     } while (0)
 
 #define GC_EXIT(ret_code, callback) \

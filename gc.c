@@ -233,7 +233,6 @@ void check_mark_and_sweep(generation *g)
  */
 vector* unused_refs(void* ret_val) {
     void** caller_stack = __builtin_frame_address(1); //this is the frame of the function that called the function to be cleaned up
-    // void** curr_stack = __builtin_frame_address(0); //this is the frame of the function that we need to clean
     void* curr_heap = (void*) sbrk(0); //current heap ptr
 
     set* caller_refs = shallow_set_create(); 
@@ -253,14 +252,6 @@ vector* unused_refs(void* ret_val) {
     
     set* unused_refs = shallow_set_create();
     
-    //scan through the stack frame to be cleaned up and see if any unsaved refs exist.
-    // ptr = curr_stack;
-    // while(ptr < caller_stack) {
-    //     if(*ptr >=  base_heap && *ptr < curr_heap) {
-    //         scan_possible_heap_addr(*ptr, unused_refs, caller_refs, curr_heap);
-    //     }
-    //     ptr++;
-    // }
     vector* inuse_vec = set_elements(in_use);
     VECTOR_FOR_EACH(inuse_vec, i, {
         if(!set_contains(caller_refs, i)) set_add(unused_refs, i);

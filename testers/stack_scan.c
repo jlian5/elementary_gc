@@ -16,8 +16,7 @@ int main() {
 
     // int* array[10];
     // for(size_t i = 0; i < 10; i ++) array[i] = gc_malloc(sizeof (int));
-    void* ptr = f();
-    (void)ptr;
+    void* _U_ ptr = f();
 
     puts("---------------- in main()-------------------------");
 
@@ -38,6 +37,7 @@ int main() {
 
     test_struct *test1 = gc_malloc(sizeof(test_struct));
     test1->mem_size = 4;
+    test1->ptr_to_heap = gc_malloc(4);
     test1->ptr_to_heap = gc_malloc(4);
     // printf("ptr is %p\n", ptr);
     printf("ptr to heap is %p\n", test1->ptr_to_heap);
@@ -60,6 +60,10 @@ void* f() {
     int* b _U_= gc_malloc(sizeof(int));
     
     // printf("b addr: %p\n", b);
+    test_struct *test1 = gc_malloc(sizeof(test_struct));
+    test1->mem_size = 4;
+    // test1->ptr_to_heap = gc_malloc(4);
+    test1->ptr_to_heap = gc_malloc(4);
 
     int* c _U_= gc_malloc(sizeof(int));
     int* d _U_= gc_malloc(sizeof(int));
@@ -68,6 +72,6 @@ void* f() {
 
 
 
-    GC_RETURN(p,{puts("----------------^^f()^^-------------------------");});
+    GC_RETURN(3,{puts("----------------^^f()^^-------------------------");});
     return 0;
 }
