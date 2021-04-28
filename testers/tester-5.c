@@ -42,7 +42,7 @@ int main(void) {
         }
 
         if (ptr == NULL) {
-            GC_EXIT(1, {puts("Memory failed to allocate!\n");});
+            GC_RETURN(1, {puts("Memory failed to allocate!\n");});
         }
 
         if (rand() % 100 < CHANCE_OF_FREE)
@@ -67,13 +67,13 @@ int main(void) {
 
     for (i = dictionary_ct - 1; i >= 0; i--) {
         if (*((void **)dictionary[i]) != &dictionary[i]) {
-            GC_EXIT(100, {puts("Memory failed to contain correct data after many allocations "
+            GC_RETURN(100, {puts("Memory failed to contain correct data after many allocations "
                 "(beginning of segment)!\n");});
         }
 
         if (*((void **)(dictionary[i] + dictionary_elem_size[i] -
                         sizeof(void *))) != &dictionary[i]) {
-            GC_EXIT(101, {puts(
+            GC_RETURN(101, {puts(
                 "Memory failed to contain correct data after many allocations "
                 "(end of segment)!\n");});
         }
@@ -81,5 +81,5 @@ int main(void) {
         gc_free(dictionary[i]);
     }
 
-    GC_EXIT(0, {puts("Memory was allocated and // freed!\n");});
+    GC_RETURN(0, {puts("Memory was allocated and // freed!\n");});
 }

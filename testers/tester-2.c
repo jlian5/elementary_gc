@@ -33,5 +33,5 @@ int main(void) {
         }
     }
 
-    GC_EXIT(0, {puts("done");});
+    GC_RETURN(0, {puts("done");});
 }

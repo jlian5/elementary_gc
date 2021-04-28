@@ -15,7 +15,7 @@ int main(void) {
 
         if (ptr == NULL) {
             fprintf(stderr, "Memory failed to allocate!\n");
-            GC_EXIT(1, {;});
+            GC_RETURN(1, {;});
         }
 
         *ptr = 4;
@@ -23,5 +23,5 @@ int main(void) {
     }
 
     fprintf(stderr, "Memory was allocated, used, and freed!\n");
-    GC_EXIT(0, {;});
+    GC_RETURN(0, {;});
 }

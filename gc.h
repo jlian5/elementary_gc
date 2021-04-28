@@ -1,3 +1,5 @@
+#pragma once
+
 #include "vector.h"
 #include "set.h"
 
@@ -20,9 +22,9 @@ extern set *in_use;
     do {                                          \
         {base_stack = __builtin_frame_address(0); \
         base_heap = (void*) sbrk(0);              \
-        in_use = shallow_set_create();}           \
+        in_use = shallow_set_create();            \
+        atexit(gc_exit);}                         \
     } while (0)
-
 
 #define GC_RETURN(ret_code,callback) \
     do {                                          \
@@ -38,12 +40,10 @@ extern set *in_use;
         {vector* v = unused_refs((void*)(uintptr_t)(ret_code));               \
         mark_and_sweep(v);                        \
         vector_destroy(v);                        \
-        free_in_use(in_use);                      \
         set_destroy(in_use);                      \
         {callback}                                \
         exit(ret_code);}                          \
     } while (0)
-#endif
 
 /**
  * This function should be called immediately before return to see the unused stack references
@@ -75,6 +75,11 @@ void *gc_calloc(size_t, size_t);
  * Version of free for this garbage collector. (no-op)
  */
 void gc_free(void *);
+
+/**
+ * Function to be called at every exit. Will clean up the rest of the malloc'ed pointers
+ */
+void gc_exit();
 
 void add_possible_heap_addr(void* heap_ptr, set* s, void* curr_heap) ;
 void scan_possible_heap_addr(void* heap_ptr, set* possible_refs,set* caller_refs, void* curr_heap);

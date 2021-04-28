@@ -15,5 +15,5 @@ int factorial(int num) {
 int main(void) {
     GC_INIT();
     fprintf(stdout, "%d\n", factorial(10));
-    GC_EXIT(0, {puts("done!");});
+    GC_RETURN(0, {puts("done!");});
 }

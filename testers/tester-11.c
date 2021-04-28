@@ -20,11 +20,11 @@ int main(void) {
         char *a = gc_malloc(SIZE + r);
 
         if (!a)
-            GC_EXIT(1, {;});
+            GC_RETURN(1, {;});
 
         verify_write(a, SIZE);
         if (!verify_read(a, SIZE))
-            GC_EXIT(1, {;});
+            GC_RETURN(1, {;});
 
         gc_free(a);
 
@@ -35,16 +35,16 @@ int main(void) {
         verify_write(c, SIZE / 4);
 
         if (!b || !c)
-            GC_EXIT(1, {;});
+            GC_RETURN(1, {;});
 
         if (!verify_read(b, SIZE / 2) || !verify_read(c, SIZE / 4) ||
             overlap(b, SIZE / 2, c, SIZE / 4))
-            GC_EXIT(1, {;});
+            GC_RETURN(1, {;});
 
         gc_free(b);
         gc_free(c);
     }
 
     fprintf(stderr, "Memory was allocated, used, and freed!\n");
-    GC_EXIT(0, {;});
+    GC_RETURN(0, {;});
 }
