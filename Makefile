@@ -25,9 +25,9 @@ LDFLAGS = -Llibs/ $(foreach lib,$(PROVIDED_LIBRARIES),-l$(lib)) -lm
 
 all: release
 
-release: clean $(EXES)
+release: $(EXES)
 
-debug: clean $(addsuffix -debug,$(EXES))
+debug: $(addsuffix -debug,$(EXES))
 
 $(TESTERS_EXE_DIR):
 	@mkdir -p $@
