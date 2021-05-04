@@ -27,7 +27,7 @@ void *malloc_and_break(void *region, int c, size_t len) {
     gc_free(sr3);
 
     sr2 = malloc_and_break(sr2, 0xcd, len / 3);
-    sr2 = realloc(sr2, len);
+    sr2 = gc_realloc(sr2, len);
 
     verify(sr2, 0xcd, len / 3);
     memset(sr2, c, len);
@@ -41,7 +41,7 @@ int main(void) {
 
     size_t len = MAX_ALLOC_SIZE;
     while (len > MIN_ALLOC_SIZE) {
-        void *mem = malloc(len);
+        void *mem = gc_malloc(len);
         memset(mem, 0xff, len);
         gc_free(malloc_and_break(mem, 0xff, len));
         len /= 3;

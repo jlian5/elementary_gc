@@ -66,6 +66,7 @@ void *gc_realloc(void *ptr, size_t request_size) {
 #endif
         new_meta->isFree = 0;
         new_meta->ptr = (void*)new_meta + sizeof(metaData);
+        new_meta->size = request_size;
         set_add(in_use, new_meta->ptr);
         return new_meta->ptr;
     }
@@ -87,7 +88,8 @@ vector* unused_refs(void* ret_val) {
     void* curr_heap = (void*) sbrk(0); //current heap ptr
 
     set* caller_refs = shallow_set_create(); 
-    if(ret_val >= base_heap && ret_val < curr_heap){
+    // if(ret_val >= base_heap && ret_val < curr_heap){
+    if(set_contains(in_use, ret_val)){
         add_possible_heap_addr(ret_val, caller_refs, curr_heap);
     }
 

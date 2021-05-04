@@ -44,7 +44,7 @@ int main(void) {
 
     size_t len = MAX_ALLOC_SIZE;
     while (len > MIN_ALLOC_SIZE) {
-        void *mem = malloc(len);
+        void *mem = gc_malloc(len);
         memset(mem, 0xff, len);
         gc_free(malloc_and_break(mem, 0xff, len));
         len /= 3;
