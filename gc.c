@@ -46,6 +46,13 @@ void *gc_malloc(size_t size) {
     return meta->ptr;
 }
 
+void gc_exit() {
+    vector* v = unused_refs(NULL);
+    mark_and_sweep(v);
+    vector_destroy(v);
+    set_destroy(in_use);
+}
+
 void *gc_calloc(size_t num_elements, size_t element_size) {
     size_t n = num_elements * element_size;
     void *ptr = gc_malloc(n);
@@ -113,7 +120,6 @@ vector* unused_refs(void* ret_val) {
     vector* unused_refs_vec = set_elements(unused_refs);
     set_destroy(unused_refs);
     set_destroy(caller_refs);
-    
 
     return unused_refs_vec; 
 }
@@ -157,12 +163,3 @@ void scan_possible_heap_addr(void* heap_ptr, set* possible_refs,set* caller_refs
 
 }
 
-void free_in_use(set *in_use_set) {
-#ifdef DEBUG
-    fprintf(stderr, "freeing %zu unused references that were found in in_use\n", set_cardinality(in_use_set));
-#endif
-    SET_FOR_EACH(in_use_set, ptr, {
-        (void)ptr;
-        // free(ptr - sizeof(metaData));
-    });
-}

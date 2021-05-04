@@ -27,5 +27,5 @@ int main(void) {
         gc_free(ptr);
     }
 
-    GC_EXIT(0,{puts("Memory was allocated and freed!\n");});
+    GC_RETURN(0,{puts("Memory was allocated and freed!\n");});
 }

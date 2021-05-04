@@ -49,9 +49,7 @@ int main() {
     // // vector* v = unused_refs();
     
     //printf("a addr: %p\n", a);
-    GC_EXIT(0,{puts("end of main");});
-    return 0;
-
+    GC_RETURN(0,{puts("end of main");});
 }
 
 int factorial(int num) {

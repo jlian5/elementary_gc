@@ -21,5 +21,5 @@ int main(void) {
         *ptr = 4;
     }
 
-    GC_EXIT(0, {fprintf(stdout,"done");});
+    GC_RETURN(0, {fprintf(stdout,"done");});
 }

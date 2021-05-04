@@ -51,5 +51,5 @@ int main(void) {
     }
 
     fprintf(stderr, "Memory was allocated and freed!\n");
-    GC_EXIT(0, {;});
+    GC_RETURN(0, {;});
 }

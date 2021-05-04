@@ -24,16 +24,6 @@
         return ret_code;}                           \
     } while (0)
 
-#define GC_EXIT(ret_code, callback) \
-    do {                                            \
-        {vector* v = unused_refs();                \
-        mark_and_sweep(v);                        \
-        vector_destroy(v);                        \
-        set_destroy(in_use);                      \
-        {callback}                                  \
-        exit(ret_code);}                           \
-    } while (0)
-
 
 typedef struct _metaData {
     int isFree;
@@ -200,8 +190,6 @@ void scan_possible_heap_addr(void* heap_ptr, set* possible_refs,set* caller_refs
     }
 
 }
-
-
 
 void *gc_malloc(size_t size) {
     metaData *meta = malloc(sizeof(metaData) + size);

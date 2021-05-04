@@ -3,9 +3,8 @@
  * CS 241 - Spring 2021
  */
 #include "gc.h"
+#include "tester-utils.h"
 
-#define G 100
-#define K 10
 #define START_MALLOC_SIZE (1 * G)
 #define STOP_MALLOC_SIZE (1 * K)
 
@@ -54,5 +53,5 @@ int main(void) {
         size /= 2;
     }
 
-    GC_EXIT(0, {puts("Memory was allocated, used, and freed!\n");});
+    GC_RETURN(0, {puts("Memory was allocated, used, and freed!\n");});
 }
