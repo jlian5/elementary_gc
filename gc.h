@@ -18,13 +18,27 @@ extern void **base_stack;
 extern void *base_heap;
 extern set *in_use;
 
+extern vector *gen1;
+extern vector *gen2;
+extern vector *boomers; //gen3
+
+extern int allocTotal;
+extern int limit0;
+extern int limit1;
+extern int limit2;
+extern int ok_boomer; //limit 3
+
 #define GC_INIT() \
     do {                                          \
         {base_stack = __builtin_frame_address(0); \
         base_heap = (void*) sbrk(0);              \
         in_use = shallow_set_create();            \
+        gen1 = shallow_vector_create();           \
+        gen2 = shallow_vector_create();           \
+        boomers = shallow_vector_create();        \
         atexit(gc_exit);}                         \
     } while (0)
+
 
 #define GC_RETURN(ret_code,callback) \
     do {                                          \
@@ -41,6 +55,9 @@ extern set *in_use;
         mark_and_sweep(v);                        \
         vector_destroy(v);                        \
         set_destroy(in_use);                      \
+        vector_destroy(gen1);                     \
+        vector_destroy(gen2);                     \
+        vector_destroy(boomers);                  \
         {callback}                                \
         exit(ret_code);}                          \
     } while (0)
