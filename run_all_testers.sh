@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-make clean
+make 
 make -f Makefile debug
 
 set +e
