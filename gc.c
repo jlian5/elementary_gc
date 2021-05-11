@@ -9,34 +9,60 @@
 //Used for stack searching
 void** base_stack;
 void* base_heap;
-set* in_use;
+set* in_use; //stack
 
 //Generation vectors (could change this to vectors of generation vectors)
-vector *gen1;
-vector *gen2;
-vector *boomers; //gen3
+set* gen1;
+set* gen2;
+set* boomers; //gen3
 
 //total alloc calls
 int allocTotal = 0;
 
 //alloc limits for each gen
-int limit0 = 4;
-int limit1 = 16;
-int limit2 = 64;
-int ok_boomer = 256; //limit 3
+int limit0 = 2;
+int limit1 = 4;
+int limit2 = 8;
+int ok_boomer = 16; //limit 3
 
-void mark_and_sweep(vector *v) {
+// void mark_and_sweep(vector *v) {
+//     size_t size = vector_size(v);
+//     //puts("b");
+//     for(size_t i = 0; i < size; i++) {
+//         metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
+//         if(!set_contains(in_use, meta->ptr)) {
+//             continue;
+//         }
+//         else if(!(meta->isFree)) {
+//             #ifdef DEBUG
+//             fprintf(stderr, "freed: %p\n", meta->ptr);
+//             #endif
+//             // printf("contained data: %d\n", *(int*)meta->ptr);
+//             set_remove(in_use, meta->ptr);
+//             free(meta);
+//         }
+//     }
+// }
+
+void mini_ms(vector *v, set *c, set *n) {
     size_t size = vector_size(v);
     //puts("b");
     for(size_t i = 0; i < size; i++) {
         metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
-        if(!set_contains(in_use, meta->ptr)) {
-            continue;
+        if(!set_contains(c, meta)) {
+            if(n != NULL) {
+                //puts("A");
+                set_add(gen1, meta->ptr);
+                set_remove(in_use, meta->ptr);
+            }
+            else {
+                continue;
+            }
         }
         else if(!(meta->isFree)) {
-#ifdef DEBUG
+            #ifdef DEBUG
             fprintf(stderr, "freed: %p\n", meta->ptr);
-#endif
+            #endif
             // printf("contained data: %d\n", *(int*)meta->ptr);
             set_remove(in_use, meta->ptr);
             free(meta);
@@ -44,29 +70,27 @@ void mark_and_sweep(vector *v) {
     }
 }
 
-// void mark_and_sweep(vector *v, vector *n) {
-//     size_t size = vector_size(v);
-//     for(size_t i = 0; i < size; i++) {
-//         metaData *meta = (void*)vector_get(v, i) - sizeof(metaData);
-//         if(!set_contains(in_use, meta->ptr)) {
-//             if (n != NULL) {
-//                 vector_push_back(n, meta);
-//                 //set_remove(in_use, meta);
-//                     fprintf(stderr, "moved: %p\n", meta);//
-//             }
-//             else {
-//                 continue;
-//             }
-//         }
-//         else if(!(meta->isFree)) {
-//                 fprintf(stderr, "freed: %p\n", meta->ptr);//
-//             // printf("contained data: %d\n", *(int*)meta->ptr);
-//             meta->isFree = 1;
-//             set_remove(in_use, meta->ptr);
-//             free(meta);
-//         }
-//     }
-// }
+
+void mark_and_sweep(vector *v) {
+
+    //Method 1
+    allocTotal++;
+    if(allocTotal % limit0 == 0)
+        mini_ms(v, in_use, gen1);
+    if(allocTotal % limit1 == 0)
+        mini_ms(v, gen1, gen2);
+    if(allocTotal % limit2 == 0)
+        mini_ms(v, gen2, boomers);
+    if(allocTotal % ok_boomer == 0)
+        mini_ms(v, boomers, NULL);
+
+    //Method 2
+    //calls mark and sweep if total data in gen < current data in gen
+    // if(g->curr_size > g->max_size) {
+    //     mark_and_sweep(g);
+    // }
+    return;
+}
 
 void *gc_malloc(size_t size) {
     metaData *meta = malloc(sizeof(metaData) + size);
@@ -77,7 +101,6 @@ void *gc_malloc(size_t size) {
     fprintf(stderr, "malloced: %p\n", meta->ptr);
     #endif
     set_add(in_use, meta->ptr);
-    //call_mark_and_sweep();    
     return meta->ptr;
 }
 
@@ -110,7 +133,6 @@ void *gc_realloc(void *ptr, size_t request_size) {
         new_meta->size = request_size;
         new_meta->ptr = (void*)new_meta + sizeof(metaData);
         set_add(in_use, new_meta->ptr);
-        //call_mark_and_sweep();
         return new_meta->ptr;
     }
     return NULL;
@@ -121,31 +143,6 @@ void gc_free(void *ptr)
     (void)ptr;
     // no-op by design
 }
-
-//checks whether g should be mark and sweep and call it if it does
-// void call_mark_and_sweep()
-// {
-
-//     //Method 1
-//     allocTotal++;
-//     if(allocTotal % limit0 == 0)
-//         mark_and_sweep(unused_refs(NULL), gen1); //function for getting refs in stack frame
-//     if(allocTotal % limit1 == 0)
-//         mark_and_sweep(gen1, gen2);
-//     if(allocTotal % limit2 == 0)
-//         mark_and_sweep(gen2, boomers);
-//     if(allocTotal % ok_boomer == 0) {
-//         mark_and_sweep(boomers, NULL);
-//         allocTotal = 0;
-//     }
-
-//     //Method 2
-//     //calls mark and sweep if total data in gen < current data in gen
-//     // if(g->curr_size > g->max_size) {
-//     //     mark_and_sweep(g);
-//     // }
-//     return;
-// }
 
 /**
  * This function should be called immediately before return to see the unused stack references in a function that is about to return. 
@@ -193,8 +190,9 @@ void add_possible_heap_addr(void* heap_ptr, set* s, void* curr_heap) {
 
     metaData *meta = heap_ptr - sizeof(metaData);
     size_t scanning_size = meta->size; 
+    #ifdef DEBUG
     printf("%zu\n", scanning_size);
-
+    #endif
     
     for(size_t i = 0; i < scanning_size; i++) {
         void* ptr = *(void**) (heap_ptr+i);

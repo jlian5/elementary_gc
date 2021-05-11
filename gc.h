@@ -18,9 +18,9 @@ extern void **base_stack;
 extern void *base_heap;
 extern set *in_use;
 
-extern vector *gen1;
-extern vector *gen2;
-extern vector *boomers; //gen3
+extern set *gen1;
+extern set *gen2;
+extern set *boomers; //gen3
 
 extern int allocTotal;
 extern int limit0;
@@ -33,9 +33,9 @@ extern int ok_boomer; //limit 3
         {base_stack = __builtin_frame_address(0); \
         base_heap = (void*) sbrk(0);              \
         in_use = shallow_set_create();            \
-        gen1 = shallow_vector_create();           \
-        gen2 = shallow_vector_create();           \
-        boomers = shallow_vector_create();        \
+        gen1 = shallow_set_create();           \
+        gen2 = shallow_set_create();           \
+        boomers = shallow_set_create();        \
         atexit(gc_exit);}                         \
     } while (0)
 
@@ -55,9 +55,9 @@ extern int ok_boomer; //limit 3
         mark_and_sweep(v);                        \
         vector_destroy(v);                        \
         set_destroy(in_use);                      \
-        vector_destroy(gen1);                     \
-        vector_destroy(gen2);                     \
-        vector_destroy(boomers);                  \
+        set_destroy(gen1);                     \
+        set_destroy(gen2);                     \
+        set_destroy(boomers);                  \
         {callback}                                \
         exit(ret_code);}                          \
     } while (0)
@@ -76,6 +76,7 @@ void free_in_use(set *);
 
 void mark_and_sweep(vector *v);
 
+void mini_ms(vector *v, set *c, set *n);
 /**
  * Version of malloc for this garbage collector.
  */
