@@ -84,6 +84,10 @@ void mark_and_sweep(vector *v) {
     if(allocTotal % ok_boomer == 0)
         mini_ms(v, boomers, NULL);
 
+    #ifdef DEBUG
+    fprintf(stderr, "in_use %zu, gen1 %zu, gen2 %zu, boomers %zu\n", set_cardinality(in_use), set_cardinality(gen1), set_cardinality(gen2), set_cardinality(boomers));
+    #endif
+
     //Method 2
     //calls mark and sweep if total data in gen < current data in gen
     // if(g->curr_size > g->max_size) {
