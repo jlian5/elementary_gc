@@ -60,15 +60,9 @@ void mini_ms(vector *v, set *c, set *n) {
             }
         }
         else if(!(meta->isFree)) {
-<<<<<<< HEAD
 #ifdef DEBUG
             // fprintf(stderr, "freed: %p\n", meta->ptr);
 #endif
-=======
-            #ifdef DEBUG
-            fprintf(stderr, "freed: %p\n", meta->ptr);
-            #endif
->>>>>>> 623d5bc813cd4d0b369f76ac0ebc37242816c6f8
             // printf("contained data: %d\n", *(int*)meta->ptr);
             set_remove(in_use, meta->ptr);
             free(meta);
@@ -196,14 +190,8 @@ void add_possible_heap_addr(void* heap_ptr, set* s, void* curr_heap) {
 
     metaData *meta = heap_ptr - sizeof(metaData);
     size_t scanning_size = meta->size; 
-<<<<<<< HEAD
     // printf("%zu\n", scanning_size);
 
-=======
-    #ifdef DEBUG
-    printf("%zu\n", scanning_size);
-    #endif
->>>>>>> 623d5bc813cd4d0b369f76ac0ebc37242816c6f8
     
     for(size_t i = 0; i < scanning_size; i++) {
         void* ptr = *(void**) (heap_ptr+i);
