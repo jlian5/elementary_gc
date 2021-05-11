@@ -5,7 +5,7 @@
 #include "gc.h"
 #include "tester-utils.h"
 
-#define START_MALLOC_SIZE (1 * G)
+#define START_MALLOC_SIZE (1 * G / 256)
 #define STOP_MALLOC_SIZE (1 * K)
 
 void *reduce(void *ptr, int size) {

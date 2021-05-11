@@ -5,8 +5,8 @@
 #include "gc.h"
 #include "tester-utils.h"
 
-#define MIN_ALLOC_SIZE (256 * 1024 * 1024)
-#define MAX_ALLOC_SIZE (1024 * 1024 * 1024)
+#define MIN_ALLOC_SIZE (G/4)
+#define MAX_ALLOC_SIZE G
 
 void *malloc_and_break(void *region, int c, size_t len) {
     if (len < MIN_ALLOC_SIZE) {

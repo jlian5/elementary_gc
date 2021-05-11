@@ -35,7 +35,7 @@ void mark_and_sweep(vector *v) {
         }
         else if(!(meta->isFree)) {
 #ifdef DEBUG
-            fprintf(stderr, "freed: %p\n", meta->ptr);
+            // fprintf(stderr, "freed: %p\n", meta->ptr);
 #endif
             // printf("contained data: %d\n", *(int*)meta->ptr);
             set_remove(in_use, meta->ptr);
@@ -74,7 +74,7 @@ void *gc_malloc(size_t size) {
     meta->size = size;
     meta->ptr = (void*)meta + sizeof(metaData);
     #ifdef DEBUG
-    fprintf(stderr, "malloced: %p\n", meta->ptr);
+    // fprintf(stderr, "malloced: %p\n", meta->ptr);
     #endif
     set_add(in_use, meta->ptr);
     //call_mark_and_sweep();    
@@ -104,7 +104,7 @@ void *gc_realloc(void *ptr, size_t request_size) {
         set_remove(in_use, meta->ptr);
         metaData *new_meta = realloc(meta, sizeof(metaData) + request_size);
         #ifdef DEBUG
-        fprintf(stderr, "realloced: %p\n", new_meta);
+        // fprintf(stderr, "realloced: %p\n", new_meta);
         #endif
         new_meta->isFree = 0;
         new_meta->size = request_size;
@@ -193,7 +193,7 @@ void add_possible_heap_addr(void* heap_ptr, set* s, void* curr_heap) {
 
     metaData *meta = heap_ptr - sizeof(metaData);
     size_t scanning_size = meta->size; 
-    printf("%zu\n", scanning_size);
+    // printf("%zu\n", scanning_size);
 
     
     for(size_t i = 0; i < scanning_size; i++) {

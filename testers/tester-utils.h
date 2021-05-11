@@ -8,9 +8,9 @@
 #include <string.h>
 #include <time.h>
 
-#define K 1024L
-#define M (1024L * 1024L)
-#define G (1024 * 1024 * 1024)
+#define K 256L
+#define M (256L * 256L)
+#define G (256 * 256 * 256)
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
