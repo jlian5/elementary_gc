@@ -23,6 +23,7 @@ PROVIDED_LIBRARIES:=$(shell find libs/ -type f -name '*.a' 2>/dev/null)
 PROVIDED_LIBRARIES:=$(PROVIDED_LIBRARIES:libs/lib%.a=%)
 LDFLAGS = -Llibs/ $(foreach lib,$(PROVIDED_LIBRARIES),-l$(lib)) -lm
 
+
 all: release
 
 release: $(EXES)
@@ -64,9 +65,9 @@ scan_mreplace: $(TESTERS_EXE_DIR)/stack_scan-debug
 .PHONY: scan_both
 scan_both: $(TESTERS_EXE_DIR)/stack_scan
 	@echo ----------------------------BELOW IS mreplace-------------------
-	./mreplace $(TESTERS_EXE_DIR)/stack_scan
+	./mreplace $(TESTERS_EXE_DIR)/stack_scan-debug
 	@echo ----------------------------BELOW IS GLIBC----------------------
-	$(TESTERS_EXE_DIR)/stack_scan
+	$(TESTERS_EXE_DIR)/stack_scan-debug
 
 
 .PHONY: clean
